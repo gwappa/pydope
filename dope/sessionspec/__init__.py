@@ -27,6 +27,7 @@ import collections as _collections
 import datetime as _datetime
 
 from .. import defaults
+from ..core import Specification as _Specification
 
 NAME_PATTERN = _re.compile(r"([a-zA-Z0-9-]*[a-zA-Z])(\d{4})-(\d{2})-(\d{2})-(\d+)")
 TYPE_PATTERN = _re.compile(r"[a-zA-Z0-9-]*[a-zA-Z]$")
@@ -74,7 +75,8 @@ def parse_session_index(indexfmt):
     return index
 
 class SessionSpec(_collections.namedtuple("_SessionSpec",
-                  ("type", "date", "index"))):
+                  ("type", "date", "index")), _Specification):
+
     def __new__(cls, type, date=None, index=None):
         if (date is None) and (index is None):
             if type is None:
@@ -90,12 +92,21 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
                                   index=parse_session_index(index))
 
     @classmethod
+    def empty(cls):
+        return cls(type=None, date=None, index=None)
+
+    @classmethod
     def from_name(cls, name):
         """initializes the specification from a property formatted session name."""
         return cls(**parse_session_name(name))
 
     def __str__(self):
         return self.name
+
+    @property
+    def status(self):
+        # TODO
+        return self.UNSPECIFIED
 
     @property
     def name(self):

@@ -21,19 +21,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-
 import collections as _collections
+from ..core import Specification as _Specification
 
-VERSION_STR = "0.1.0"
+class FileSpec(_collections.namedtuple("_FileSpec",
+                ("trial", "run", "channel", "filetype")), _Specification):
 
-defaults = {
-    "session.index.width":  3,
-    "session.nospec.type":  "<any>",
-    "session.nospec.date":  "<any-date>",
-    "session.nospec.index": "<any>",
-}
+    def __new__(cls, trial, run=None, channel=None, filetype=None):
+        super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
 
-from .modes import *
-from .sessionspec import SessionSpec
-from .predicate import Predicate
-from .dataroot import DataRoot
+    @classmethod
+    def empty(cls):
+        return FileSpec(trial=None, run=None, channel=None, filetype=None)
+
+    @property
+    def status(self):
+        # TODO
+        return self.UNSPECIFIED

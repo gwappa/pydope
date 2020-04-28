@@ -22,18 +22,12 @@
 # SOFTWARE.
 #
 
-import collections as _collections
+READ   = "r" # reads existing datasets
+WRITE  = "w" # updates datasets; modifies if they exist; creates them otherwise
+APPEND = "a" # appends to existing datasets; raises error in case it attempts to modify existing
 
-VERSION_STR = "0.1.0"
-
-defaults = {
-    "session.index.width":  3,
-    "session.nospec.type":  "<any>",
-    "session.nospec.date":  "<any-date>",
-    "session.nospec.index": "<any>",
-}
-
-from .modes import *
-from .sessionspec import SessionSpec
-from .predicate import Predicate
-from .dataroot import DataRoot
+def verify(mode):
+    mode = mode.lower()
+    if mode not in (READ, WRITE, APPEND):
+        raise ValueError(f"unknown I/O mode: '{mode}'")
+    return mode
