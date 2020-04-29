@@ -21,30 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+"""common procedures in testing."""
+from datetime import datetime
+from pathlib import Path
 
-import unittest
-from . import *
-from .. import modes, testing
-
-class DataRootTests(unittest.TestCase):
-    def setUp(self):
-        self._root = testing.test_dataroot_path()
-
-    def test_initialize(self):
-        for mod in (modes.WRITE, modes.APPEND):
-            root = DataRoot(self._root, mode=mod) # should success
-        self.assertEqual(root.path, self._root)
-
-        with self.assertRaises(FileNotFoundError):
-            DataRoot(self._root, mode=modes.READ)
-
-        self._root.mkdir()
-        DataRoot(self._root) # should success
-        self._root.rmdir()
-
-        with self.assertRaises(FileNotFoundError):
-            DataRoot(self._root)
-
-    def tearDown(self):
-        if self._root.exists():
-            self._root.rmdir()
+def test_dataroot_path():
+    suffix = datetime.now().strftime("%y%m%d-%H%M%S-%f")
+    root = Path(f"test{suffix}")
+    if root.exists():
+        raise FileExistsError("cannot prepare a test data-root")
+    return root
