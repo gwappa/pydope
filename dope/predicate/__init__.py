@@ -23,11 +23,32 @@
 #
 
 import collections as _collections
+import pathlib as _pathlib
+
 from .. import modes as _modes
 from ..core import SelectionStatus as _SelectionStatus
 from ..core import DataLevels as _DataLevels
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
+
+def compute_selection_status(spec):
+    """returns the status of root/dataset/subject/domain selection."""
+    if isinstance(spec, (str, bytes, _pathlib.Path)):
+        return _SelectionStatus.SINGLE
+    elif spec is None:
+        return _SelectionStatus.UNSPECIFIED
+    elif callable(spec):
+        return _SelectionStatus.DYNAMIC
+    elif iterable(spec):
+        size = len(spec)
+        if size == 1:
+            return _SelectionStatus.SINGLE
+        elif size == 0:
+            return _SelectionStatus.NONE
+        else:
+            return _SelectionStatus.MULTIPLE
+    else:
+        raise ValueError(f"unexpected specification: {spec}")
 
 class Predicate(_collections.namedtuple("_Predicate",
                 ("mode", "root", "dataset", "subject", "sessionspec",
@@ -64,7 +85,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         elif self.root is not None:
             return self.ROOT
         else:
-            return self.NONE
+            return self.NA
 
     @property
     def status(self):
@@ -72,46 +93,26 @@ class Predicate(_collections.namedtuple("_Predicate",
         if any(callable(item) for item in self):
             return self.DYNAMIC
 
-        elif self.dataset is None: # possibly representing a data-root
-            if self.subject is not None:
-                return self.PARTIAL
-            elif self.sessionspec.status != _SessionSpec.UNSPECIFIED:
-                return self.PARTIAL
-            elif self.domain is not None:
-                return self.PARTIAL
-            elif self.filespec.status != _FileSpec.UNSPECIFIED:
-                return self.PARTIAL
-            return self.ROOT
+        lev = self.level
+        if lev == self.NA:
+            return self.UNSPECIFIED
 
-        elif self.subject is None: # possibly representing a dataset
-            if self.sessionspec.status != _SessionSpec.UNSPECIFIED:
-                return self.PARTIAL
-            elif self.domain is not None:
-                return self.PARTIAL
-            elif self.filespec.status != _FileSpec.UNSPECIFIED:
-                return self.PARTIAL
-            return self.DATASET
+        for spec, lv in ((self.root, self.ROOT),
+                         (self.dataset, self.DATASET),
+                         (self.subject, self.SUBJECT)):
+            status = compute_selection_status(spec)
+            if (lev == lv) or (status != self.SINGLE):
+                return status
 
-        elif self.sessionspec.status == _SessionSpec.UNSPECIFIED: # possibly representing a subject
-            if self.domain is not None:
-                return self.PARTIAL
-            elif self.filespec.status != _FileSpec.UNSPECIFIED:
-                return self.PARTIAL
-            return self.SUBJECT
+        status = self.sessionspec.status
+        if (lev == self.SESSION) or (status != self.SINGLE):
+            return status
 
-        elif self.domain is None: # possibly representing a session
-            if self.filespec.status != _FileSpec.UNSPECIFIED:
-                return self.PARTIAL
-            return self.SESSION
+        status = compute_selection_status(self.domain)
+        if (lev == self.DOMAIN) or (status != self.SINGLE):
+            return status
 
-        elif self.filespec.status == _FileSpec.UNSPECIFIED: # represents a domain
-            return self.DOMAIN
-
-        elif self.filespec.status == _FileSpec.SINGLE:
-            return self.FILE
-
-        else:
-            return self.PARTIAL
+        return self.filespec.status
 
     @property
     def session(self):
@@ -127,24 +128,20 @@ class Predicate(_collections.namedtuple("_Predicate",
 
         raises ValueError in case a path cannot be computed.
         """
+        level  = self.level
         status = self.status
-        msg    = None
-        if status is None:
-            msg = "data-root remains unspecified"
-        elif status == self.PARTIAL:
-            msg = "specification is partial"
-        if msg is not None:
-            raise ValueError(f"cannot compute a path: {msg}")
+        if status != self.SINGLE:
+            raise ValueError(f"cannot compute a path: not specifying a single condition (status: '{status}')")
 
-        if status == self.ROOT:
+        if level == self.ROOT:
             return self.root
-        elif status == self.DATASET:
+        elif level == self.DATASET:
             return self.root / self.dataset
-        elif status == self.SUBJECT:
+        elif level == self.SUBJECT:
             return self.root / self.dataset / self.subject
-        elif status == self.SESSION:
+        elif level == self.SESSION:
             return self.root / self.dataset / self.subject / self.sessionspec.name
-        elif status == self.DOMAIN:
+        elif level == self.DOMAIN:
             return self.root / self.dataset / self.subject / self.sessionspec.name / self.domain
         else:
             # status == FILE

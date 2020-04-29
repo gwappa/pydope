@@ -66,13 +66,14 @@ class Selector:
         return self._cls.from_path(child, self._spec)
 
 class SelectionStatus:
+    NONE        = "none"
     UNSPECIFIED = "unspecified"
     SINGLE      = "single"
     MULTIPLE    = "multiple"
     DYNAMIC     = "dynamic"
 
 class DataLevels:
-    NONE    = "none"
+    NA      = "na"
     ROOT    = "root"
     DATASET = "dataset"
     SUBJECT = "subject"
