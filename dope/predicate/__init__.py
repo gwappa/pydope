@@ -24,27 +24,20 @@
 
 import collections as _collections
 from .. import modes as _modes
+from ..core import SelectionStatus as _SelectionStatus
+from ..core import DataLevels as _DataLevels
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
 
 class Predicate(_collections.namedtuple("_Predicate",
                 ("mode", "root", "dataset", "subject", "sessionspec",
-                 "domain", "filespec"))):
+                 "domain", "filespec")),
+                _SelectionStatus, _DataLevels):
     """a predicate specification to search the datasets."""
     DEFAULT_MODE = _modes.READ
 
-    # constants for representing specification status
-    NONE    = "none"
-    PARTIAL = "partial"
-    ROOT    = "root"
-    DATASET = "dataset"
-    SUBJECT = "subject"
-    SESSION = "session"
-    DOMAIN  = "domain"
-    FILE    = "file"
-
     def __new__(cls, **specs):
-        vlaues = dict()
+        values = dict()
         for fld in cls._fields:
             values[fld] = specs.get(fld, None)
         if values["mode"] is None:
@@ -56,13 +49,28 @@ class Predicate(_collections.namedtuple("_Predicate",
         return super(cls, Predicate).__new__(cls, **values)
 
     @property
-    def status(self):
-        """returns a string representation for the status of specification."""
-        if self.root is None:
+    def level(self):
+        """returns a string representation for the 'level' of specification."""
+        if self.filespec.status != _FileSpec.UNSPECIFIED:
+            return self.FILE
+        elif self.domain is not None:
+            return self.DOMAIN
+        elif self.sessionspec.status != _SessionSpec.UNSPECIFIED:
+            return self.SESSION
+        elif self.subject is not None:
+            return self.SUBJECT
+        elif self.dataset is not None:
+            return self.DATASET
+        elif self.root is not None:
+            return self.ROOT
+        else:
             return self.NONE
 
-        elif any(callable(item) for item in self):
-            return self.PARTIAL
+    @property
+    def status(self):
+        """returns a string representation for the status of specification."""
+        if any(callable(item) for item in self):
+            return self.DYNAMIC
 
         elif self.dataset is None: # possibly representing a data-root
             if self.subject is not None:

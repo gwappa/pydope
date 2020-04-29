@@ -21,20 +21,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-import collections as _collections
-from ..core import SelectionStatus as _SelectionStatus
 
-class FileSpec(_collections.namedtuple("_FileSpec",
-                ("trial", "run", "channel", "filetype")), _SelectionStatus):
+from .. import modes as _modes
+from ..predicate import Predicate as _Predicate
+from ..core import Container as _Container
 
-    def __new__(cls, trial, run=None, channel=None, filetype=None):
-        super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
+class Dataset(_Container):
+    """a container class representing a dataset directory."""
+    @classmethod
+    def is_valid_path(cls, path):
+        """returns if the specified file name
+        represents a valid dataset name."""
+        return True
 
     @classmethod
-    def empty(cls):
-        return FileSpec(trial=None, run=None, channel=None, filetype=None)
+    def from_path(cls, path, parentspec):
+        raise NotImplementedError(f"not implemented: {cls}.from_path()")
 
-    @property
-    def status(self):
-        # TODO
-        return self.UNSPECIFIED
+    def __init__(self, spec, mode=_modes.READ):
+        """`spec` may be a path-like object or a Predicate."""
+        pass

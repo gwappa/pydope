@@ -27,7 +27,7 @@ import collections as _collections
 import datetime as _datetime
 
 from .. import defaults
-from ..core import Specification as _Specification
+from ..core import SelectionStatus as _SelectionStatus
 
 NAME_PATTERN = _re.compile(r"([a-zA-Z0-9-]*[a-zA-Z])(\d{4})-(\d{2})-(\d{2})-(\d+)")
 TYPE_PATTERN = _re.compile(r"[a-zA-Z0-9-]*[a-zA-Z]$")
@@ -75,7 +75,7 @@ def parse_session_index(indexfmt):
     return index
 
 class SessionSpec(_collections.namedtuple("_SessionSpec",
-                  ("type", "date", "index")), _Specification):
+                  ("type", "date", "index")), _SelectionStatus):
 
     def __new__(cls, type, date=None, index=None):
         if (date is None) and (index is None):

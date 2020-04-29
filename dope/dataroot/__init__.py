@@ -27,6 +27,7 @@ import pathlib as _pathlib
 from .. import modes as _modes
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
+from ..core import Selector as _Selector
 
 class DataRoot(_Container):
     """a container class representing the data root directory."""
@@ -56,8 +57,13 @@ class DataRoot(_Container):
             raise FileNotFoundError(f"data-root does not exist: {self._spec.root}")
 
     @property
+    def path(self):
+        return self._spec.root
+
+    @property
     def datasets(self):
-        return Selector(self._spec, _Container)
+        from ..dataset import Dataset
+        return _Selector(self._spec, Dataset)
 
     def __getitem__(self, key):
         return self.datasets[key]

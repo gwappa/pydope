@@ -21,20 +21,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-import collections as _collections
-from ..core import SelectionStatus as _SelectionStatus
 
-class FileSpec(_collections.namedtuple("_FileSpec",
-                ("trial", "run", "channel", "filetype")), _SelectionStatus):
+import unittest
+from . import *
+from datetime import datetime
+from pathlib import Path
+from .. import modes
 
-    def __new__(cls, trial, run=None, channel=None, filetype=None):
-        super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
+class DataRootTests(unittest.TestCase):
+    def setUp(self):
+        suffix = datetime.now().strftime("%y%m%d-%H%M%S-%f")
+        self._root = Path(f"test{suffix}")
+        if self._root.exists():
+            raise FileExistsError("cannot use a test data-root")
 
-    @classmethod
-    def empty(cls):
-        return FileSpec(trial=None, run=None, channel=None, filetype=None)
+    def test_initialize(self):
+        for mod in (modes.WRITE, modes.APPEND):
+            root = DataRoot(self._root, mode=mod) # should success
+        self.assertEqual(root.path, self._root)
 
-    @property
-    def status(self):
-        # TODO
-        return self.UNSPECIFIED
+        with self.assertRaises(FileNotFoundError):
+            DataRoot(self._root, mode=modes.READ)
+
+        self._root.mkdir()
+        DataRoot(self._root) # should success
+        self._root.rmdir()
+
+        with self.assertRaises(FileNotFoundError):
+            DataRoot(self._root)

@@ -65,8 +65,17 @@ class Selector:
                 raise FileNotFoundError(f"item does not exist: {child}")
         return self._cls.from_path(child, self._spec)
 
-class Specification:
+class SelectionStatus:
     UNSPECIFIED = "unspecified"
     SINGLE      = "single"
     MULTIPLE    = "multiple"
     DYNAMIC     = "dynamic"
+
+class DataLevels:
+    NONE    = "none"
+    ROOT    = "root"
+    DATASET = "dataset"
+    SUBJECT = "subject"
+    SESSION = "session"
+    DOMAIN  = "domain"
+    FILE    = "file"
