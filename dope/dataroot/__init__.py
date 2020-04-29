@@ -34,13 +34,13 @@ class DataRoot(_Container):
 
     @classmethod
     def is_valid_path(cls, path):
-        """returns if the specified file name
-        represents a valid name for this container type."""
-        return True
+        """returns if the specified file path
+        represents a valid dataroot."""
+        return False
 
     @classmethod
-    def from_path(cls, path, parentspec):
-        raise NotImplementedError(f"cannot use from_path() for DataRoot")
+    def from_parent(cls, parentspec, name):
+        raise NotImplementedError(f"cannot use from_parent() for DataRoot")
 
     def __init__(self, spec, mode=_modes.READ):
         """spec: pathlike or Predicate"""

@@ -30,12 +30,12 @@ class Container:
 
     @classmethod
     def is_valid_path(cls, path):
-        """returns if the specified file name
-        represents a valid name for this container type."""
-        return False
+        """returns if the specified file path
+        represents a valid file for this container type."""
+        raise NotImplementedError(f"not implemented: {cls}.is_valid_path()")
 
     @classmethod
-    def from_path(cls, path, parentspec):
+    def from_parent(cls, parentspec, name):
         raise NotImplementedError(f"not implemented: {cls}.from_path()")
 
     def with_mode(self, mode):
@@ -44,16 +44,16 @@ class Container:
 
 class Selector:
     """an adaptor class used to select from subdirectories."""
-    def __init__(self, spec, baseclass):
+    def __init__(self, spec, generator):
         self._spec = spec
-        self._cls  = baseclass
+        self._gen  = generator
 
     def __iter__(self):
         parent = self._spec.path
         if not parent.exists():
             raise FileNotFoundError(f"path does not exist: {parent}")
-        return tuple(self._cls.from_path(path, self._spec) for path in parent.iterdir() \
-                    if self._cls.is_valid_path(path))
+        return tuple(sorted(self._gen.from_parent(self._spec, path.name) for path in parent.iterdir() \
+                    if self._gen.is_valid_path(path)))
 
     def __getitem__(self, key):
         parent = self._spec.path
@@ -63,7 +63,7 @@ class Selector:
                 raise FileNotFoundError(f"container path does not exist: {parent}")
             if not child.exists():
                 raise FileNotFoundError(f"item does not exist: {child}")
-        return self._cls.from_path(child, self._spec)
+        return self._gen.from_parent(self._spec, key)
 
 class SelectionStatus:
     NONE        = "none"
