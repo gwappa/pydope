@@ -21,29 +21,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
 import pathlib as _pathlib
 
 from .. import modes as _modes
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
-from ..subject import Subject as _Subject
 
-class Dataset(_Container):
-    """a container class representing a dataset directory."""
+def parse_spec_from_path(path):
+    raise NotImplementedError("dope.datafile.parse_spec_from_path()")
+
+class DataFile(_Container):
+    """a container class representing a data file."""
     @classmethod
     def is_valid_path(cls, path):
         """returns if the specified file path
-        represents a valid dataset."""
-        return (not path.name.startswith(".")) and (path.is_dir())
+        represents a valid session."""
+        if path.name.startswith(".") or path.is_dir():
+            return False
+        try:
+            parsed = parse_spec_from_path(path)
+            return True
+        except ValueError:
+            return False
 
     @classmethod
-    def compute_path(cls, parentpath, key):
-        return parentpath / key
-
-    @classmethod
-    def from_parent(cls, parentspec, name):
-        return cls(parentspec.with_values(dataset=name))
+    def from_parent(cls, parentspec, key):
+        raise NotImplementedError("dope.datafile.DataFile.from_parent()")
 
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
@@ -53,34 +58,23 @@ class Dataset(_Container):
             try:
                 path = _pathlib.Path(spec).resolve()
             except TypeError:
-                raise ValueError(f"Dataset can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-            if mode is None:
-                mode = _modes.READ
-            spec = _Predicate(mode=mode, root=path.parent, dataset=path.name)
+                raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+            spec = _Predicate(mode=mode if mode is not None else _modes.READ,
+                              **parse_spec_from_path(path))
         else:
             # validate and (if needed) modify the Predicate
             level = spec.level
             mode  = spec.mode if mode is None else mode
-            if level in (spec.NA, spec.ROOT):
-                raise ValueError(f"cannot specify a dataset from the predicate level: '{level}'")
-            elif level != spec.DATASET:
-                spec = spec.with_values(mode=mode, root=spec.root,
-                                        dataset=spec.dataset, clear=True)
+            if level != spec.FILE:
+                raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
             elif spec.mode != mode:
                 spec = spec.with_values(mode=mode)
 
         self._spec = spec
         self._path = spec.path
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
-            raise FileNotFoundError(f"dataset directory does not exist: {self._path}")
+            raise FileNotFoundError(f"data file does not exist: {self._path}")
 
     @property
     def path(self):
         return self._path
-
-    @property
-    def subjects(self):
-        return _Selector(self._spec, _Subject)
-
-    def __getitem__(self, key):
-        return self.subjects[key]
