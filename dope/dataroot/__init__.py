@@ -39,6 +39,10 @@ class DataRoot(_Container):
         return False
 
     @classmethod
+    def compute_path(cls, parentpath, key):
+        raise NotImplementedError(f"cannot use compute_path() for DataRoot")
+
+    @classmethod
     def from_parent(cls, parentspec, name):
         raise NotImplementedError(f"cannot use from_parent() for DataRoot")
 

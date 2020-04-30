@@ -36,6 +36,10 @@ class Dataset(_Container):
         return (not path.name.startswith(".")) and (path.is_dir())
 
     @classmethod
+    def compute_path(cls, parentpath, key):
+        return parentpath / key
+
+    @classmethod
     def from_parent(cls, parentspec, name):
         return cls(parentspec.with_values(dataset=name))
 
@@ -52,12 +56,12 @@ class Dataset(_Container):
                 mode = _modes.READ
             spec = _Predicate(mode=mode, root=path.parent, dataset=path.name)
         else:
+            # validate and (if needed) modify the Predicate
             level = spec.level
+            mode  = spec.mode if mode is None else mode
             if level in (spec.NA, spec.ROOT):
                 raise ValueError(f"cannot specify a dataset from the predicate level: '{level}'")
-
-            mode = spec.mode if mode is None else mode
-            if spec.level != spec.DATASET:
+            elif level != spec.DATASET:
                 spec = spec.with_values(mode=mode, root=spec.root,
                                         dataset=spec.dataset, clear=True)
             elif spec.mode != mode:
@@ -66,7 +70,7 @@ class Dataset(_Container):
         self._spec = spec
         self._path = spec.path
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
-            raise FileNotFoundError(f"data-root does not exist: {self._path}")
+            raise FileNotFoundError(f"dataset directory does not exist: {self._path}")
 
     @property
     def path(self):

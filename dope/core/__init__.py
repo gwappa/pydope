@@ -24,7 +24,7 @@
 
 from .. import modes as _modes
 
-class Container:
+class Container: # TODO: better renamed as `Context`?
     """a reference to data based on a specific Predicate."""
     _spec = None
 
@@ -35,7 +35,15 @@ class Container:
         raise NotImplementedError(f"not implemented: {cls}.is_valid_path()")
 
     @classmethod
-    def from_parent(cls, parentspec, name):
+    def compute_path(cls, parentpath, key):
+        """computes a path for a container from the parent path and `key`.
+        `key` is typically a string, but may be e.g. SessionSpec."""
+        raise NotImplementedError(f"not implemented: {cls}.compute_child_path()")
+
+    @classmethod
+    def from_parent(cls, parentspec, key):
+        """creates a container from the parent spec and `key`.
+        `key` is typically a string, but may be e.g. SessionSpec."""
         raise NotImplementedError(f"not implemented: {cls}.from_path()")
 
     def with_mode(self, mode):
@@ -57,9 +65,9 @@ class Selector:
                             if self._delegate.is_valid_path(path)))
 
     def __getitem__(self, key):
-        child = self._path / key
+        child = self._delegate.compute_path(self._path, key)
         if self._spec.mode == _modes.READ:
-            if not parent.exists():
+            if not self._path.exists():
                 raise FileNotFoundError(f"container path does not exist: {parent}")
             if not child.exists():
                 raise FileNotFoundError(f"item does not exist: {child}")
