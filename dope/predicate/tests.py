@@ -29,12 +29,12 @@ from . import *
 
 class PredicateTests(unittest.TestCase):
     def test_sessionspec(self):
-        self.assertEqual(Predicate(sessionindex=1).session_index, 1)
+        self.assertEqual(Predicate(session_index=1).session_index, 1)
         self.assertEqual(Predicate(session="session2019-03-11-001").session_name,
                         "session2019-03-11-001")
-        self.assertEqual(Predicate(sessiondate="2019-03-11").session_date.strftime("%Y-%m-%d"),
+        self.assertEqual(Predicate(session_date="2019-03-11").session_date.strftime("%Y-%m-%d"),
                         "2019-03-11")
-        self.assertEqual(Predicate(sessiontype="session").session_type, "session")
+        self.assertEqual(Predicate(session_type="session").session_type, "session")
 
     def test_level(self):
         pred = Predicate()

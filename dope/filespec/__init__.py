@@ -25,23 +25,25 @@ import collections as _collections
 from ..core import SelectionStatus as _SelectionStatus
 
 class FileSpec(_collections.namedtuple("_FileSpec",
-                ("trial", "run", "channel", "filetype")), _SelectionStatus):
+                ("suffix", "trial", "run", "channel")), _SelectionStatus):
 
-    def __new__(cls, trial=None, run=None, channel=None, filetype=None):
-        return super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
+    def __new__(cls, suffix=None, trial=None, run=None, channel=None):
+        return super(cls, FileSpec).__new__(cls, suffix=suffix, trial=trial, run=run, channel=channel)
 
     @classmethod
     def empty(cls):
-        return FileSpec(trial=None, run=None, channel=None, filetype=None)
+        return FileSpec(suffix=None, trial=None, run=None, channel=None)
 
     @property
     def status(self):
         # FIXME: read dynamically??
         unspecified = (((self.trial is None) and (self.run is None)),
                        self.channel is None,
-                       self.filetype is None)
+                       self.suffix is None)
         if all(unspecified):
             return self.UNSPECIFIED
+        elif any(callable(fld) for fld in self):
+            return self.DYNAMIC
         elif any(unspecified):
             return self.MULTIPLE
         else:
@@ -55,4 +57,4 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         return self.__class__(**spec)
 
     def cleared(self):
-        return self.__class__(None, None, None, None)
+        return self.__class__()

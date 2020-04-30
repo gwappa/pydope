@@ -29,7 +29,7 @@ from . import *
 
 class FileSpecTests(unittest.TestCase):
     def test_status(self):
-        obj = FileSpec(trial=None, run=1, channel="V", filetype=".npy")
+        obj = FileSpec(trial=None, run=1, channel="V", suffix=".npy")
         self.assertEqual(obj.status, obj.SINGLE)
         obj = obj.with_values(trial=1, run=None)
         self.assertEqual(obj.status, obj.SINGLE)
