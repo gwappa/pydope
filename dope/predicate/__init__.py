@@ -50,6 +50,26 @@ def compute_selection_status(spec):
     else:
         raise ValueError(f"unexpected specification: {spec}")
 
+def compute_sessionspec(specs, default=None):
+    if "sessionspec" in specs.keys():
+        return _SessionSpec(*specs["sessionspec"])
+    elif "session" in specs.keys():
+        return _SessionSpec(specs["session"])
+    else:
+        if default is None:
+            default = _SessionSpec()
+        sspec = dict((k.replace("session",""), v) for k, v in specs.items() \
+                     if k.startswith("session"))
+        return default.with_values(**sspec)
+
+def compute_filespec(specs, default=None):
+    if "filespec" in specs.keys():
+        return _FileSpec(*specs["filespec"])
+    else:
+        if default is None:
+            default = _FileSpec()
+        return default
+
 class Predicate(_collections.namedtuple("_Predicate",
                 ("mode", "root", "dataset", "subject", "sessionspec",
                  "domain", "filespec")),
@@ -57,16 +77,25 @@ class Predicate(_collections.namedtuple("_Predicate",
     """a predicate specification to search the datasets."""
     DEFAULT_MODE = _modes.READ
 
-    def __new__(cls, **specs):
+    def __new__(cls, *args, **specs):
         values = dict()
+        offset = 0
         for fld in cls._fields:
-            values[fld] = specs.get(fld, None)
+            if fld == "sessionspec":
+                values[fld] = compute_sessionspec(specs)
+            elif fld in specs.keys():
+                values[fld] = specs[fld]
+            elif len(args) > offset:
+                values[fld] = args[offset]
+                offset += 1
+            else:
+                values[fld] = None
         if values["mode"] is None:
             values["mode"] = cls.DEFAULT_MODE
-        if values["sessionspec"] is None:
-            values["sessionspec"] = _SessionSpec.empty()
         if values["filespec"] is None:
             values["filespec"] = _FileSpec.empty()
+        if values["root"] is not None:
+            values["root"] = _pathlib.Path(values["root"])
         return super(cls, Predicate).__new__(cls, **values)
 
     @property
@@ -119,6 +148,22 @@ class Predicate(_collections.namedtuple("_Predicate",
         return self.sessionspec.name
 
     @property
+    def session_name(self):
+        return self.sessionspec.name
+
+    @property
+    def session_index(self):
+        return self.sessionspec.index
+
+    @property
+    def session_type(self):
+        return self.sessionspec.type
+
+    @property
+    def session_date(self):
+        return self.sessionspec.date
+
+    @property
     def path(self):
         """returns a simulated path object if and only if this Predicate
         can represent a single file.
@@ -157,7 +202,12 @@ class Predicate(_collections.namedtuple("_Predicate",
                 default = getattr(self, fld)
             else:
                 default = None
-            spec[fld] = newvalues.get(fld, default)
+            if fld == "sessionspec":
+                spec[fld] = compute_sessionspec(newvalues, default)
+            elif fld == "filespec":
+                spec[fld] = compute_filespec(newvalues, default)
+            else:
+                spec[fld] = newvalues.get(fld, default)
         return self.__class__(**spec)
 
     def cleared(self):

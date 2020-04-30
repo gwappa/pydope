@@ -71,5 +71,13 @@ class SessionSpecTests(unittest.TestCase):
             "2p-imaging2015-12-31-003")
         SessionSpec(type=None, date=None, index=None)
 
+    def test_status(self):
+        obj = SessionSpec(type="session", date="2015-12-31", index=1)
+        self.assertEqual(obj.status, obj.SINGLE)
+        obj = obj.with_values(index=None)
+        self.assertEqual(obj.status, obj.MULTIPLE)
+        obj = obj.cleared()
+        self.assertEqual(obj.status, obj.UNSPECIFIED)
+
 if __name__ == "__main__":
     unittest.main()

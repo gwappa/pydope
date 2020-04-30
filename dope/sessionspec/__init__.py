@@ -77,7 +77,7 @@ def parse_session_index(indexfmt):
 class SessionSpec(_collections.namedtuple("_SessionSpec",
                   ("type", "date", "index")), _SelectionStatus):
 
-    def __new__(cls, type, date=None, index=None):
+    def __new__(cls, type=None, date=None, index=None):
         if (date is None) and (index is None):
             if type is None:
                 return super(cls, SessionSpec).__new__(cls, type=None, date=None, index=None)
@@ -105,13 +105,29 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
 
     @property
     def status(self):
-        # TODO
-        return self.UNSPECIFIED
+        # FIXME: deal with actual paths?
+        stat = tuple(fld is None for fld in self)
+        if all(stat):
+            return self.UNSPECIFIED
+        elif any(stat):
+            return self.MULTIPLE
+        else:
+            return self.SINGLE
 
     @property
     def name(self):
         """returns the session specification as it appears on directory names."""
         return self.format()
+
+    def with_values(self, **kwargs):
+        spec = dict(**kwargs)
+        for fld in self._fields:
+            if fld not in spec.keys():
+                spec[fld] = getattr(self, fld)
+        return self.__class__(**spec)
+
+    def cleared(self):
+        return self.__class__(None,None,None)
 
     def format(self,
                digits=None,

@@ -27,8 +27,8 @@ from ..core import SelectionStatus as _SelectionStatus
 class FileSpec(_collections.namedtuple("_FileSpec",
                 ("trial", "run", "channel", "filetype")), _SelectionStatus):
 
-    def __new__(cls, trial, run=None, channel=None, filetype=None):
-        super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
+    def __new__(cls, trial=None, run=None, channel=None, filetype=None):
+        return super(cls, FileSpec).__new__(cls, trial=trial, run=run, channel=channel, filetype=filetype)
 
     @classmethod
     def empty(cls):
@@ -36,5 +36,23 @@ class FileSpec(_collections.namedtuple("_FileSpec",
 
     @property
     def status(self):
-        # TODO
-        return self.UNSPECIFIED
+        # FIXME: read dynamically??
+        unspecified = (((self.trial is None) and (self.run is None)),
+                       self.channel is None,
+                       self.filetype is None)
+        if all(unspecified):
+            return self.UNSPECIFIED
+        elif any(unspecified):
+            return self.MULTIPLE
+        else:
+            return self.SINGLE
+
+    def with_values(self, **kwargs):
+        spec = dict(**kwargs)
+        for fld in self._fields:
+            if fld not in spec.keys():
+                spec[fld] = getattr(self, fld)
+        return self.__class__(**spec)
+
+    def cleared(self):
+        return self.__class__(None, None, None, None)
