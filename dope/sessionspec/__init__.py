@@ -105,14 +105,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
 
     @property
     def status(self):
-        # FIXME: deal with actual paths?
-        stat = tuple(fld is None for fld in self)
-        if all(stat):
-            return self.UNSPECIFIED
-        elif any(stat):
-            return self.MULTIPLE
-        else:
-            return self.SINGLE
+        return self.compute_status(None)
 
     @property
     def name(self):
@@ -128,6 +121,23 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
 
     def cleared(self):
         return self.__class__(None,None,None)
+
+    def compute_status(self, context=None):
+        # TODO
+        if context is None:
+            stat = tuple(fld is None for fld in self)
+            if all(stat):
+                return self.UNSPECIFIED
+            elif any(stat):
+                return self.MULTIPLE
+            else:
+                return self.SINGLE
+        else:
+            raise NotImplementedError("SessionSpec.compute_status()")
+
+    def compute_path(self, context):
+        """context: Predicate"""
+        return context.compute_subject_path() / self.name
 
     def format(self,
                digits=None,

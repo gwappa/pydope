@@ -26,6 +26,7 @@ from ..core import SelectionStatus as _SelectionStatus
 
 class FileSpec(_collections.namedtuple("_FileSpec",
                 ("suffix", "trial", "run", "channel")), _SelectionStatus):
+    DIGITS = 5
 
     def __new__(cls, suffix=None, trial=None, run=None, channel=None):
         return super(cls, FileSpec).__new__(cls, suffix=suffix, trial=trial, run=run, channel=channel)
@@ -36,18 +37,59 @@ class FileSpec(_collections.namedtuple("_FileSpec",
 
     @property
     def status(self):
-        # FIXME: read dynamically??
-        unspecified = (((self.trial is None) and (self.run is None)),
-                       self.channel is None,
-                       self.suffix is None)
-        if all(unspecified):
-            return self.UNSPECIFIED
-        elif any(callable(fld) for fld in self):
-            return self.DYNAMIC
-        elif any(unspecified):
-            return self.MULTIPLE
+        return self.compute_status(None)
+
+    def compute_status(self, context=None):
+        # TODO
+        if context is None:
+            unspecified = (((self.trial is None) and (self.run is None)),
+                           self.channel is None,
+                           self.suffix is None)
+            if all(unspecified):
+                return self.UNSPECIFIED
+            elif any(callable(fld) for fld in self):
+                return self.DYNAMIC
+            elif any(unspecified):
+                return self.MULTIPLE
+            else:
+                return self.SINGLE
         else:
-            return self.SINGLE
+            raise NotImplementedError("FileSpec.compute_status()")
+
+    def compute_path(self, context):
+        """context: Predicate"""
+        return context.compute_domain_path() / self.format_name(context)
+
+    def format_name(self, context, digits=None):
+        """context: Predicate"""
+        runtxt = self.format_run(digits=digits)
+        chtxt  = self.format_channel(context)
+        sxtxt  = self.format_suffix()
+        return f"{context.subject}_{context.session.name}_{context.domain}{runtxt}{chtxt}{sxtxt}"
+
+    def format_run(self, digits=None):
+        if digits is None:
+            digits = self.DIGITS
+        if self.trial is None:
+            if self.run is None:
+                return ""
+            else:
+                return "_" + str(self.run).zfill(digits)
+        else:
+            return "_" + str(self.trial).zfill(digits)
+
+    def format_channel(self, context):
+        if self.channel is None:
+            return ""
+        elif isinstance(self.channel, str):
+            return f"_{self.channel}"
+        elif iterable(self.channel):
+            return "_" + "-".join(self.channel)
+        else:
+            raise ValueError(f"cannot compute channel from: {self.channel}")
+
+    def format_suffix(self):
+        return self.suffix if self.suffix is not None else ""
 
     def with_values(self, **kwargs):
         spec = dict(**kwargs)

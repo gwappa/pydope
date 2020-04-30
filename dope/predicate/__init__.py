@@ -124,30 +124,7 @@ class Predicate(_collections.namedtuple("_Predicate",
 
     @property
     def status(self):
-        """returns a string representation for the status of specification."""
-        if any(callable(item) for item in self):
-            return self.DYNAMIC
-
-        lev = self.level
-        if lev == self.NA:
-            return self.UNSPECIFIED
-
-        for spec, lv in ((self.root, self.ROOT),
-                         (self.dataset, self.DATASET),
-                         (self.subject, self.SUBJECT)):
-            status = compute_selection_status(spec)
-            if (lev == lv) or (status != self.SINGLE):
-                return status
-
-        status = self.session.status
-        if (lev == self.SESSION) or (status != self.SINGLE):
-            return status
-
-        status = compute_selection_status(self.domain)
-        if (lev == self.DOMAIN) or (status != self.SINGLE):
-            return status
-
-        return self.file.status
+        return self.compute_status()
 
     @property
     def session_name(self):
@@ -183,32 +160,23 @@ class Predicate(_collections.namedtuple("_Predicate",
 
     @property
     def path(self):
-        """returns a simulated path object if and only if this Predicate
-        can represent a single file.
+        return self.compute_path()
 
-        it does not necessarily mean that the returned value points to an
-        existing file.
+    @property
+    def dataset_path(self):
+        return self.compute_dataset_path()
 
-        raises ValueError in case a path cannot be computed.
-        """
-        level  = self.level
-        status = self.status
-        if status != self.SINGLE:
-            raise ValueError(f"cannot compute a path: not specifying a single condition (status: '{status}')")
+    @property
+    def subject_path(self):
+        return self.compute_subject_path()
 
-        if level == self.ROOT:
-            return self.root
-        elif level == self.DATASET:
-            return self.root / self.dataset
-        elif level == self.SUBJECT:
-            return self.root / self.dataset / self.subject
-        elif level == self.SESSION:
-            return self.root / self.dataset / self.subject / self.session.name
-        elif level == self.DOMAIN:
-            return self.root / self.dataset / self.subject / self.session.name / self.domain
-        else:
-            # status == FILE
-            return self.file.get_path(self)
+    @property
+    def session_path(self):
+        return self.session.compute_path(self)
+
+    @property
+    def domain_path(self):
+        return self.compute_domain_path()
 
     def with_values(self, clear=False, **newvalues):
         """specifying 'clear=True' will fill all values
@@ -233,3 +201,83 @@ class Predicate(_collections.namedtuple("_Predicate",
         """returns another Predicate where everything (except for
         `mode` and `root`) is cleared."""
         return self.__class__()
+
+    def compute_status(self):
+        """returns a string representation for the status of specification."""
+        if any(callable(item) for item in self):
+            return self.DYNAMIC
+
+        lev = self.level
+        if lev == self.NA:
+            return self.UNSPECIFIED
+
+        status = compute_selection_status(self.root)
+        if (lev == self.ROOT) or (status != self.SINGLE):
+            return status
+
+        status = self.compute_dataset_status()
+        if (lev == self.DATASET) or (status != self.SINGLE):
+            return status
+
+        status = self.compute_subject_status()
+        if (lev == self.SUBJECT) or (status != self.SINGLE):
+            return status
+
+        status = self.session.compute_status(self)
+        if (lev == self.SESSION) or (status != self.SINGLE):
+            return status
+
+        status = self.compute_domain_status()
+        if (lev == self.DOMAIN) or (status != self.SINGLE):
+            return status
+
+        return self.file.compute_status(self)
+
+    def compute_dataset_status(self):
+        # TODO
+        return compute_selection_status(self.dataset)
+
+    def compute_subject_status(self):
+        # TODO
+        return compute_selection_status(self.subject)
+
+    def compute_domain_status(self):
+        # TODO
+        return compute_selection_status(self.domain)
+
+    def compute_path(self):
+        """returns a simulated path object if and only if this Predicate
+        can represent a single file.
+
+        it does not necessarily mean that the returned value points to an
+        existing file.
+
+        raises ValueError in case a path cannot be computed.
+        """
+        level  = self.level
+        status = self.status
+        if status != self.SINGLE:
+            raise ValueError(f"cannot compute a path: not specifying a single condition (status: '{status}')")
+
+        if level == self.ROOT:
+            return self.root
+        elif level == self.DATASET:
+            return self.compute_dataset_path()
+        elif level == self.SUBJECT:
+            return self.compute_subject_path()
+        elif level == self.SESSION:
+            return self.session.compute_path(self)
+        elif level == self.DOMAIN:
+            return self.compute_domain_path()
+        else:
+            # status == FILE
+            return self.file.compute_path(self)
+
+    def compute_dataset_path(self):
+        return self.root / self.dataset
+
+    def compute_subject_path(self):
+        return self.compute_dataset_path() / self.subject
+
+    def compute_domain_path(self):
+        return self.session.compute_path(self) / self.domain
