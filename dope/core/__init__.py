@@ -44,26 +44,30 @@ class Container:
 
 class Selector:
     """an adaptor class used to select from subdirectories."""
-    def __init__(self, spec, generator):
-        self._spec = spec
-        self._gen  = generator
+    def __init__(self, spec, delegate):
+        self._spec     = spec
+        self._path     = spec.path
+        self._delegate = delegate
 
     def __iter__(self):
-        parent = self._spec.path
-        if not parent.exists():
+        if not self._path.exists():
             raise FileNotFoundError(f"path does not exist: {parent}")
-        return tuple(sorted(self._gen.from_parent(self._spec, path.name) for path in parent.iterdir() \
-                    if self._gen.is_valid_path(path)))
+        return tuple(sorted(self._delegate.from_parent(self._spec, path.name) \
+                            for path in self._path.iterdir() \
+                            if self._delegate.is_valid_path(path)))
 
     def __getitem__(self, key):
-        parent = self._spec.path
-        child = parent / key
+        child = self._path / key
         if self._spec.mode == _modes.READ:
             if not parent.exists():
                 raise FileNotFoundError(f"container path does not exist: {parent}")
             if not child.exists():
                 raise FileNotFoundError(f"item does not exist: {child}")
-        return self._gen.from_parent(self._spec, key)
+        return self._delegate.from_parent(self._spec, key)
+
+    @property
+    def path(self):
+        return self._path
 
 class SelectionStatus:
     NONE        = "none"
