@@ -81,7 +81,6 @@ class Predicate(_collections.namedtuple("_Predicate",
                  "domain", "file")),
                 _SelectionStatus, _DataLevels):
     """a predicate specification to search the datasets."""
-    DEFAULT_MODE = _modes.READ
 
     def __new__(cls, *args, **specs):
         values = dict()
@@ -98,8 +97,7 @@ class Predicate(_collections.namedtuple("_Predicate",
                 offset += 1
             else:
                 values[fld] = None
-        if values["mode"] is None:
-            values["mode"] = cls.DEFAULT_MODE
+        values["mode"] = _modes.verify(values["mode"])
         if values["root"] is not None:
             values["root"] = _pathlib.Path(values["root"])
         return super(cls, Predicate).__new__(cls, **values)

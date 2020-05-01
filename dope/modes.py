@@ -26,7 +26,11 @@ READ   = "r" # reads existing datasets
 WRITE  = "w" # updates datasets; modifies if they exist; creates them otherwise
 APPEND = "a" # appends to existing datasets; raises error in case it attempts to modify existing
 
+DEFAULT = WRITE
+
 def verify(mode):
+    if mode is None:
+        return DEFAULT
     mode = mode.lower()
     if mode not in (READ, WRITE, APPEND):
         raise ValueError(f"unknown I/O mode: '{mode}'")
