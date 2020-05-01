@@ -88,8 +88,23 @@ class Domain(_Container):
         return self._path
 
     @property
-    def domains(self):
+    def dataset(self):
+        from ..dataset import Dataset
+        return Dataset(self._spec.as_dataset())
+
+    @property
+    def subject(path):
+        from ..subject import Subject
+        return Subject(self._spec.as_subject())
+
+    @property
+    def session(path):
+        from ..session import Session
+        return Session(self._spec.as_session())
+
+    @property
+    def files(self):
         return _Selector(self._spec, _DataFile)
 
     def __getitem__(self, key):
-        return self.domains[key]
+        return self.files[key]

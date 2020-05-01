@@ -84,6 +84,11 @@ class Subject(_Container):
         return self._path
 
     @property
+    def dataset(self):
+        from ..dataset import Dataset
+        return Dataset(self._spec.as_dataset())
+
+    @property
     def sessions(self):
         return _Selector(self._spec, _Session)
 

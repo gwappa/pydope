@@ -100,6 +100,16 @@ class Session(_Container):
         return self._path
 
     @property
+    def dataset(self):
+        from ..dataset import Dataset
+        return Dataset(self._spec.as_dataset())
+
+    @property
+    def subject(path):
+        from ..subject import Subject
+        return Subject(self._spec.as_subject())
+
+    @property
     def domains(self):
         return _Selector(self._spec, _Domain)
 

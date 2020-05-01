@@ -78,3 +78,23 @@ class DataFile(_Container):
     @property
     def path(self):
         return self._path
+
+    @property
+    def dataset(self):
+        from ..dataset import Dataset
+        return Dataset(self._spec.as_dataset())
+
+    @property
+    def subject(path):
+        from ..subject import Subject
+        return Subject(self._spec.as_subject())
+
+    @property
+    def session(path):
+        from ..session import Session
+        return Session(self._spec.as_session())
+
+    @property
+    def domain(path):
+        from ..domain import Domain
+        return Domain(self._spec.as_domain())
