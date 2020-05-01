@@ -40,12 +40,12 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
             else:
                 # attempt name-based initialization
                 try:
-                    return cls(**_parsing.parse_session_name(type))
+                    return cls(**_parsing.session.name(type))
                 except ValueError:
                     pass # fallthrough
-        return super(cls, SessionSpec).__new__(cls, type=_parsing.parse_session_type(type),
-                                  date=_parsing.parse_session_date(date),
-                                  index=_parsing.parse_session_index(index))
+        return super(cls, SessionSpec).__new__(cls, type=_parsing.session.type(type),
+                                  date=_parsing.session.date(date),
+                                  index=_parsing.session.index(index))
 
     @classmethod
     def empty(cls):
@@ -54,7 +54,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     @classmethod
     def from_name(cls, name):
         """initializes the specification from a property formatted session name."""
-        return cls(**_parsing.parse_session_name(name))
+        return cls(**_parsing.session.name(name))
 
     def __str__(self):
         return self.name
@@ -118,7 +118,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
                default = defaults["session.nospec.date"]
            return str(default)
        else:
-           return self.date.strftime(_parsing.SESSION_DATE_FORMAT)
+           return self.date.strftime(_parsing.session.DATE_FORMAT)
 
     def _format_index(self, digits=None, default=None):
        if digits is None:

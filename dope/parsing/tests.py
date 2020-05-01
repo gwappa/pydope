@@ -27,7 +27,7 @@
 import unittest
 from . import *
 
-class SessionSpecTests(unittest.TestCase):
+class ParsingTests(unittest.TestCase):
     def assert_function_with_values(self, fun,
                             passes=[],
                             fails=[],
@@ -39,25 +39,56 @@ class SessionSpecTests(unittest.TestCase):
                 fun(failobj)
 
     def test_parse_type(self):
-        self.assert_function_with_values(parse_session_type,
+        self.assert_function_with_values(session.type,
             passes=("session", "2p", "no-task", None),
             fails=("task2",))
 
     def test_parse_date(self):
         import datetime
-        self.assert_function_with_values(parse_session_date,
+        self.assert_function_with_values(session.date,
             passes=("2019-02-26", datetime.datetime.now(), None),
             fails=("2019.02.26", "26-02-2019", "2019-26-02"))
 
     def test_parse_index(self):
-        self.assert_function_with_values(parse_session_index,
+        self.assert_function_with_values(session.index,
             passes=(1, "1", "001", None),
             fails=("all", -1))
 
     def test_parse_name(self):
-        self.assert_function_with_values(parse_session_name,
+        self.assert_function_with_values(session.name,
             passes=("session2016-01-25-001", "no-task2015-12-31-003",),
             fails=(None, "session2016-01-25", "session-2016-01-25-001"))
+
+    def test_parser(self):
+        sub  = "K1"
+        styp = "ane"
+        sidx = 1
+        sdat = "2019-11-12"
+        sess = f"{styp}{sdat}-{sidx:03d}"
+        dom  = "img"
+        run  = 1
+        suf  = ".tif"
+        chans= ("Green", "Red")
+        spec = f"run{run:03d}_{'-'.join(chans)}{suf}"
+        name = f"{sub}_{sess}_{dom}_{spec}"
+        ps = Parse(name)
+        self.assertEqual(len(ps.result), 0)
+        self.assertEqual(ps.remaining, name)
+        ps = ps.subject
+        self.assertEqual(ps.result["subject"], sub)
+        self.assertEqual(len(ps.remaining), len(name) - len(sub) - 1)
+        ps = ps.session
+        self.assertEqual(ps.result["session"]["type"], styp)
+        self.assertEqual(ps.result["session"]["date"].strftime(session.DATE_FORMAT), sdat)
+        self.assertEqual(ps.result["session"]["index"], sidx)
+        ps = ps.domain
+        self.assertEqual(ps.result["domain"], dom)
+        self.assertEqual(ps.remaining, spec)
+        ps = ps.filespec
+        self.assertEqual(ps.result["filespec"]["suffix"], ".tif")
+        self.assertEqual(ps.result["filespec"]["trial"],  None)
+        self.assertEqual(ps.result["filespec"]["run"],    run)
+        self.assertEqual(set(ps.result["filespec"]["channel"]), set(chans))
 
 if __name__ == "__main__":
     unittest.main()

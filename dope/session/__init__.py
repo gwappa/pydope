@@ -29,7 +29,7 @@ from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 from ..sessionspec import SessionSpec as _SessionSpec
-from ..parsing import parse_session_name as _parse_session_name
+from .. import parsing as _parsing
 from ..domain import Domain as _Domain
 
 class Session(_Container):
@@ -41,7 +41,7 @@ class Session(_Container):
         if path.name.startswith(".") or (not path.is_dir()):
             return False
         try:
-            spec = _parse_session_name(path.name)
+            spec = _parsing.session.name(path.name)
             return True
         except ValueError:
             return False
