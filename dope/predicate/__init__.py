@@ -200,6 +200,32 @@ class Predicate(_collections.namedtuple("_Predicate",
         `mode` and `root`) is cleared."""
         return self.__class__()
 
+    def as_dataset(self, mode=None):
+        return self.__class__(mode=self.mode if mode is None else mode,
+                              root=self.root,
+                              dataset=self.dataset)
+
+    def as_subject(self, mode=None):
+        return self.__class__(mode=self.mode if mode is None else mode,
+                              root=self.root,
+                              dataset=self.dataset,
+                              subject=self.subject)
+
+    def as_session(self, mode=None):
+        return self.__class__(mode=self.mode if mode is None else mode,
+                              root=self.root,
+                              dataset=self.dataset,
+                              subject=self.subject,
+                              session=self.session)
+
+    def as_domain(self, mode=None):
+        return self.__class__(mode=self.mode if mode is None else mode,
+                              root=self.root,
+                              dataset=self.dataset,
+                              subject=self.subject,
+                              session=session,
+                              domain=domain)
+
     def compute_status(self):
         """returns a string representation for the status of specification."""
         if any(callable(item) for item in self):
