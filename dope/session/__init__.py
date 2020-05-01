@@ -29,7 +29,7 @@ from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 from ..sessionspec import SessionSpec as _SessionSpec
-from ..sessionspec import parse_session_name as _parse_session_name
+from ..parsing import parse_session_name as _parse_session_name
 from ..domain import Domain as _Domain
 
 class Session(_Container):

@@ -28,51 +28,7 @@ import datetime as _datetime
 
 from .. import defaults
 from ..core import SelectionStatus as _SelectionStatus
-
-NAME_PATTERN = _re.compile(r"([a-zA-Z0-9-]*[a-zA-Z])(\d{4})-(\d{2})-(\d{2})-(\d+)")
-TYPE_PATTERN = _re.compile(r"[a-zA-Z0-9-]*[a-zA-Z]$")
-DATE_FORMAT  = "%Y-%m-%d"
-
-def parse_session_name(namefmt):
-    if not isinstance(namefmt, str):
-        raise ValueError(f"session name expected to be a string, but got {namefmt.__class__}")
-    matched = NAME_PATTERN.match(namefmt)
-    if not matched:
-        raise ValueError(f"does not match to session-name pattern: {namefmt}")
-    return dict(type=matched.group(1),
-                date=_datetime.datetime.strptime(f"{matched.group(2)}-{matched.group(3)}-{matched.group(4)}",
-                                                 DATE_FORMAT),
-                index=int(matched.group(5)))
-
-def parse_session_type(typefmt):
-    if typefmt is None:
-        return None
-    elif not isinstance(typefmt, str):
-        raise ValueError(f"session type must be str or None, got {typefmt.__class__}")
-    if not TYPE_PATTERN.match(typefmt):
-        raise ValueError(f"does not match to session-type pattern: '{typefmt}'")
-    return typefmt
-
-def parse_session_date(datefmt):
-    if datefmt is None:
-        return None
-    elif isinstance(datefmt, _datetime.datetime):
-        return datefmt
-    try:
-        return _datetime.datetime.strptime(datefmt, DATE_FORMAT)
-    except ValueError as e:
-        raise ValueError(f"failed to parse session date: '{datefmt}' ({e})")
-
-def parse_session_index(indexfmt):
-    if indexfmt is None:
-        return None
-    try:
-        index = int(indexfmt)
-    except ValueError as e:
-        raise ValueError(f"failed to parse session index: '{indexfmt}' ({e})")
-    if index < 0:
-        raise ValueError(f"session index cannot be negative, but got '{index}'")
-    return index
+from .. import parsing as _parsing
 
 class SessionSpec(_collections.namedtuple("_SessionSpec",
                   ("type", "date", "index")), _SelectionStatus):
@@ -84,12 +40,12 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
             else:
                 # attempt name-based initialization
                 try:
-                    return cls(**parse_session_name(type))
+                    return cls(**_parsing.parse_session_name(type))
                 except ValueError:
                     pass # fallthrough
-        return super(cls, SessionSpec).__new__(cls, type=parse_session_type(type),
-                                  date=parse_session_date(date),
-                                  index=parse_session_index(index))
+        return super(cls, SessionSpec).__new__(cls, type=_parsing.parse_session_type(type),
+                                  date=_parsing.parse_session_date(date),
+                                  index=_parsing.parse_session_index(index))
 
     @classmethod
     def empty(cls):
@@ -98,7 +54,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     @classmethod
     def from_name(cls, name):
         """initializes the specification from a property formatted session name."""
-        return cls(**parse_session_name(name))
+        return cls(**_parsing.parse_session_name(name))
 
     def __str__(self):
         return self.name
@@ -162,7 +118,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
                default = defaults["session.nospec.date"]
            return str(default)
        else:
-           return self.date.strftime(DATE_FORMAT)
+           return self.date.strftime(_parsing.SESSION_DATE_FORMAT)
 
     def _format_index(self, digits=None, default=None):
        if digits is None:
