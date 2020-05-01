@@ -21,13 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
 """parsing file/directory names."""
 import re as _re
 import datetime as _datetime
 from collections import namedtuple as _namedtuple
 
 SEP          = "_"
-ParseResult = _namedtuple("ParseResult", ("result", "remaining"))
+ParseResult  = _namedtuple("ParseResult", ("result", "remaining"))
 
 class ParseError(ValueError):
     def __init__(self, msg):
@@ -196,7 +197,7 @@ class filespec(element):
         res = dict()
         for key in cls.KEYS:
             res[key], fmt = cls.keyed_index(fmt, key=key)
-            
+
         channels = []
         chan     = cls.channel(fmt)
         while (chan.result is not None) and (chan.remaining is not None):
