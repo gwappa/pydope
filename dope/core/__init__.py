@@ -85,9 +85,7 @@ class SelectionStatus:
     DYNAMIC     = "dynamic"
 
 class DataLevels:
-    NA      = "na"
     ROOT    = "root"
-    DATASET = "dataset"
     SUBJECT = "subject"
     SESSION = "session"
     DOMAIN  = "domain"

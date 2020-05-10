@@ -24,16 +24,94 @@
 import collections as _collections
 from ..core import SelectionStatus as _SelectionStatus
 
+def parse_repeated(item, parsefun, separators=(",", "/", "+", "-")):
+    """tests if the string `item` consists of a repetition of
+    representations."""
+    item = item.strip()
+    if " " in item:
+        return parsefun(item.split())
+    for sep in separators:
+        if sep in item:
+            return parsefun(item.split(sep))
+    # otherwise
+    return None
+
+def parse_index(index, label="index"):
+    if index is None:
+        return None
+    elif isinstance(index, int):
+        return index
+    elif isinstance(index, str):
+        is_repeat = parse_repeated(index, parse_index)
+        if is_repeat is not None:
+            return is_repeat
+        # otherwise: assumed to be a single index repr
+        idx = None
+        try:
+            idx = int(index)
+        except ValueError:
+            pass
+        if idx is None:
+            raise ValueError(f"error parsing '{index}' into an index")
+        if idx < 0:
+            raise ValueError(f"{label} cannot be negative (got {idx})")
+        return idx
+    elif hasattr(index, "__iter__"):
+        parsed = [parse_index(i, label) for i in index]
+        return tuple(item for item in parsed if item is not None)
+    elif callable(index):
+        return index
+    else:
+        raise ValueError(f"unexpected {label} type: '{index}'")
+
+def parse_suffix(suffix):
+    if suffix is None:
+        return None
+    elif isinstance(suffix, str):
+        is_repeat = parse_repeated(suffix, parse_suffix)
+        if is_repeat is not None:
+            return is_repeat
+        # otherwise: assumed to be a single suffix repr
+        suffix = suffix.strip()
+        if len(suffix) == 0:
+            return None
+        elif not suffix.startswith("."):
+            return "." + suffix
+        else:
+            return suffix
+    elif hasattr(suffix, "__iter__"):
+        parsed = [parse_suffix(s) for s in suffix]
+        return tuple(item for item in parsed if item is not None)
+    elif callable(suffix):
+        return suffix
+    else:
+        raise ValueError(f"unexpected suffix: '{suffix}'")
+
+def parse_channels(channels):
+    if channels is None:
+        return None
+    elif isinstance(channels, str):
+        is_repeat = parse_repeated(channels, parse_channels)
+        if is_repeat is not None:
+            return is_repeat
+        # otherwise: assume to be a single channel repr
+        return channels
+    elif hasattr(channels, "__iter__"):
+        parsed = [parse_channels(chan) for chan in channels]
+        return tuple(item for item in parsed if item is not None)
+    elif callable(channels):
+        return channels
+
 class FileSpec(_collections.namedtuple("_FileSpec",
                 ("suffix", "trial", "run", "channel")), _SelectionStatus):
     DIGITS = 5
 
     def __new__(cls, suffix=None, trial=None, run=None, channel=None):
-        return super(cls, FileSpec).__new__(cls, suffix=suffix, trial=trial, run=run, channel=channel)
-
-    @classmethod
-    def empty(cls):
-        return FileSpec(suffix=None, trial=None, run=None, channel=None)
+        return super(cls, FileSpec).__new__(cls,
+                        suffix=parse_suffix(suffix),
+                        trial=parse_index(trial, "trial index"),
+                        run=parse_index(run, "run index"),
+                        channel=parse_channels(channel))
 
     @property
     def status(self):
@@ -50,6 +128,8 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             elif any(callable(fld) for fld in self):
                 return self.DYNAMIC
             elif any(unspecified):
+                return self.MULTIPLE
+            elif any(((not isinstance(fld, str)) and hasattr(fld, "__iter__")) for fld in self):
                 return self.MULTIPLE
             else:
                 return self.SINGLE
@@ -73,10 +153,14 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         if self.trial is None:
             if self.run is None:
                 return ""
+            elif not isinstance(self.run, int):
+                raise ValueError(f"cannot compute a run representation from run index: {self.run}")
             else:
-                return "_" + str(self.run).zfill(digits)
+                return "_run" + str(self.run).zfill(digits)
+        elif not isinstance(self.trial, int):
+            raise ValueError(f"cannot compute a trial representation from trial index: {self.trial}")
         else:
-            return "_" + str(self.trial).zfill(digits)
+            return "_trial" + str(self.trial).zfill(digits)
 
     def format_channel(self, context):
         if self.channel is None:
@@ -86,10 +170,15 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         elif iterable(self.channel):
             return "_" + "-".join(self.channel)
         else:
-            raise ValueError(f"cannot compute channel from: {self.channel}")
+            raise ValueError(f"cannot compute channel representation from: {self.channel}")
 
     def format_suffix(self):
-        return self.suffix if self.suffix is not None else ""
+        if self.suffix is None:
+            return ""
+        elif not isinstance(self.suffix, str):
+            raise ValueError(f"cannot compute a suffix from specification: {self.suffix}")
+        else:
+            return self.suffix
 
     def with_values(self, **kwargs):
         spec = dict(**kwargs)
@@ -97,6 +186,3 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             if fld not in spec.keys():
                 spec[fld] = getattr(self, fld)
         return self.__class__(**spec)
-
-    def cleared(self):
-        return self.__class__()

@@ -37,12 +37,8 @@ class PredicateTests(unittest.TestCase):
         self.assertEqual(Predicate(session_type="session").session_type, "session")
 
     def test_level(self):
-        pred = Predicate()
-        self.assertEqual(pred.level, pred.NA)
-        pred = pred.with_values(root="testroot")
+        pred = Predicate(root="testroot")
         self.assertEqual(pred.level, pred.ROOT)
-        pred = pred.with_values(dataset="testds")
-        self.assertEqual(pred.level, pred.DATASET)
         pred = pred.with_values(subject="testsub")
         self.assertEqual(pred.level, pred.SUBJECT)
         pred = pred.with_values(session="session2019-03-11-001")

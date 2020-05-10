@@ -31,6 +31,8 @@ from ..core import DataLevels as _DataLevels
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
 
+from . import parse as _parse
+
 def compute_selection_status(spec):
     """returns the status of root/dataset/subject/domain selection."""
     if isinstance(spec, (str, bytes, _pathlib.Path)):
@@ -50,57 +52,32 @@ def compute_selection_status(spec):
     else:
         raise ValueError(f"unexpected specification: {spec}")
 
-def compute_session(specs, default=None):
-    if "session" in specs.keys():
-        if isinstance(specs["session"], str):
-            return _SessionSpec(specs["session"])
-        else:
-            return _SessionSpec(*specs["session"])
-    else:
-        if default is None:
-            default = _SessionSpec()
-        sspec = dict((k.replace("session_",""), v) for k, v in specs.items() \
-                     if k.startswith("session_"))
-        return default.with_values(**sspec)
-
-def compute_file(specs, default=None):
-    if "file" in specs.keys():
-        if isinstance(specs["file"], str):
-            return _FileSpec(specs["file"])
-        else:
-            return _FileSpec(*specs["file"])
-    else:
-        if default is None:
-            default = _FileSpec()
-        fspec = dict((k,v) for k, v in specs.items() \
-                     if k in _FileSpec._fields)
-        return default.with_values(**fspec)
 
 class Predicate(_collections.namedtuple("_Predicate",
-                ("mode", "root", "dataset", "subject", "session",
-                 "domain", "file")),
+                ("mode",
+                 "root",
+                 "subject",
+                 "session",
+                 "domain",
+                 "file")),
                 _SelectionStatus, _DataLevels):
     """a predicate specification to search the datasets."""
 
-    def __new__(cls, *args, **specs):
-        values = dict()
-        offset = 0
-        for fld in cls._fields:
-            if fld == "session":
-                values[fld] = compute_session(specs)
-            elif fld == "file":
-                values[fld] = compute_file(specs)
-            elif fld in specs.keys():
-                values[fld] = specs[fld]
-            elif len(args) > offset:
-                values[fld] = args[offset]
-                offset += 1
-            else:
-                values[fld] = None
-        values["mode"] = _modes.verify(values["mode"])
-        if values["root"] is not None:
-            values["root"] = _pathlib.Path(values["root"])
-        return super(cls, Predicate).__new__(cls, **values)
+    def __new__(cls,
+                mode=None,
+                root=None,
+                subject=None,
+                session=None,
+                domain=None,
+                file=None,
+                **specs):
+        return super(cls, Predicate).__new__(cls,
+                        _modes.verify(mode),
+                        _parse.root(root),
+                        _parse.item_default(subject, "subject"),
+                        _parse.session(session=session, **specs),
+                        _parse.item_default(domain, "domain"),
+                        _parse.file(file=file, **specs))
 
     @property
     def level(self):
@@ -113,12 +90,8 @@ class Predicate(_collections.namedtuple("_Predicate",
             return self.SESSION
         elif self.subject is not None:
             return self.SUBJECT
-        elif self.dataset is not None:
-            return self.DATASET
-        elif self.root is not None:
-            return self.ROOT
         else:
-            return self.NA
+            return self.ROOT
 
     @property
     def status(self):
@@ -161,10 +134,6 @@ class Predicate(_collections.namedtuple("_Predicate",
         return self.compute_path()
 
     @property
-    def dataset_path(self):
-        return self.compute_dataset_path()
-
-    @property
     def subject_path(self):
         return self.compute_subject_path()
 
@@ -188,40 +157,27 @@ class Predicate(_collections.namedtuple("_Predicate",
                 default = None
 
             if fld == "session":
-                spec[fld] = compute_session(newvalues, default)
+                spec[fld] = _parse.session(**newvalues, default=default)
             elif fld == "file":
-                spec[fld] = compute_file(newvalues, default)
+                spec[fld] = _parse.file(**newvalues, default=default)
             else:
                 spec[fld] = newvalues.get(fld, default)
         return self.__class__(**spec)
 
-    def cleared(self):
-        """returns another Predicate where everything (except for
-        `mode` and `root`) is cleared."""
-        return self.__class__()
-
-    def as_dataset(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else mode,
-                              root=self.root,
-                              dataset=self.dataset)
-
     def as_subject(self, mode=None):
         return self.__class__(mode=self.mode if mode is None else mode,
                               root=self.root,
-                              dataset=self.dataset,
                               subject=self.subject)
 
     def as_session(self, mode=None):
         return self.__class__(mode=self.mode if mode is None else mode,
                               root=self.root,
-                              dataset=self.dataset,
                               subject=self.subject,
                               session=self.session)
 
     def as_domain(self, mode=None):
         return self.__class__(mode=self.mode if mode is None else mode,
                               root=self.root,
-                              dataset=self.dataset,
                               subject=self.subject,
                               session=session,
                               domain=domain)
@@ -232,15 +188,9 @@ class Predicate(_collections.namedtuple("_Predicate",
             return self.DYNAMIC
 
         lev = self.level
-        if lev == self.NA:
-            return self.UNSPECIFIED
 
         status = compute_selection_status(self.root)
         if (lev == self.ROOT) or (status != self.SINGLE):
-            return status
-
-        status = self.compute_dataset_status()
-        if (lev == self.DATASET) or (status != self.SINGLE):
             return status
 
         status = self.compute_subject_status()
@@ -256,10 +206,6 @@ class Predicate(_collections.namedtuple("_Predicate",
             return status
 
         return self.file.compute_status(self)
-
-    def compute_dataset_status(self):
-        # TODO
-        return compute_selection_status(self.dataset)
 
     def compute_subject_status(self):
         # TODO
@@ -285,8 +231,6 @@ class Predicate(_collections.namedtuple("_Predicate",
 
         if level == self.ROOT:
             return self.root
-        elif level == self.DATASET:
-            return self.compute_dataset_path()
         elif level == self.SUBJECT:
             return self.compute_subject_path()
         elif level == self.SESSION:
@@ -297,11 +241,8 @@ class Predicate(_collections.namedtuple("_Predicate",
             # status == FILE
             return self.file.compute_path(self)
 
-    def compute_dataset_path(self):
-        return self.root / self.dataset
-
     def compute_subject_path(self):
-        return self.compute_dataset_path() / self.subject
+        return self.root / self.subject
 
     def compute_domain_path(self):
         return self.session.compute_path(self) / self.domain

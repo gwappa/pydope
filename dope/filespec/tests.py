@@ -35,5 +35,5 @@ class FileSpecTests(unittest.TestCase):
         self.assertEqual(obj.status, obj.SINGLE)
         obj = obj.with_values(trial=None)
         self.assertEqual(obj.status, obj.MULTIPLE)
-        obj = obj.cleared()
+        obj = FileSpec()
         self.assertEqual(obj.status, obj.UNSPECIFIED)
