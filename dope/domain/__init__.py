@@ -28,7 +28,27 @@ from .. import modes as _modes
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
-from ..datafile import DataFile as _DataFile
+
+def verify_spec(spec, mode=None):
+    """`spec` may be a path-like object or a Predicate.
+    by default, dope.modes.READ is selected for `mode`."""
+    if not isinstance(spec, _Predicate):
+        # assumes path-like object
+        try:
+            path = _pathlib.Path(spec).resolve()
+        except TypeError:
+            raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+        sessdir = path.parent
+        subdir  = sessdir.parent
+        dsdir   = subdir.parent
+        rootdir = dsdir.parent
+        spec = _Predicate(mode=_modes.verify(mode),
+                          root=rootdir,
+                          dataset=dsdir.name,
+                          subject=subdir.name,
+                          sessionspec=_SessionSpec(sessdir.name),
+                          domain=path.name)
+    return spec.with_values(mode=_modes.verify(mode))
 
 class Domain(_Container):
     """a container class representing a domain directory."""
@@ -45,38 +65,17 @@ class Domain(_Container):
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        if not isinstance(spec, _Predicate):
-            # assumes path-like object
-            try:
-                path = _pathlib.Path(spec).resolve()
-            except TypeError:
-                raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-            sessdir = path.parent
-            subdir  = sessdir.parent
-            dsdir   = subdir.parent
-            rootdir = dsdir.parent
-            spec = _Predicate(mode=mode if mode is not None else _modes.READ,
-                              root=rootdir,
-                              dataset=dsdir.name,
-                              subject=subdir.name,
-                              sessionspec=_SessionSpec(sessdir.name),
-                              domain=path.name)
-        else:
-            # validate and (if needed) modify the Predicate
-            level = spec.level
-            mode  = spec.mode if mode is None else mode
-            if level in (spec.NA, spec.ROOT, spec.DATASET, spec.SUBJECT, spec.SESSION):
-                raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
-            elif level != spec.DOMAIN:
-                spec = spec.with_values(mode=mode,
-                                        root=spec.root,
-                                        dataset=spec.dataset,
-                                        subject=spec.subject,
-                                        sessionspec=spec.sessionspec,
-                                        domain=spec.domain,
-                                        clear=True)
-            elif spec.mode != mode:
-                spec = spec.with_values(mode=mode)
+        spec = verify_spec(spec, mode=mode)
+        level = spec.level
+        if level in (spec.ROOT, spec.SUBJECT, spec.SESSION):
+            raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
+        elif level != spec.DOMAIN:
+            spec = _Predicate(mode=spec.mode,
+                              root=spec.root,
+                              dataset=spec.dataset,
+                              subject=spec.subject,
+                              session=spec.session,
+                              domain=spec.domain)
 
         self._spec = spec
         self._path = spec.path
@@ -104,7 +103,8 @@ class Domain(_Container):
 
     @property
     def files(self):
-        return _Selector(self._spec, _DataFile)
+        from ..datafile import DataFile
+        return _Selector(self._spec, DataFile)
 
     def __getitem__(self, key):
         return self.files[key]

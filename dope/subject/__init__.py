@@ -28,7 +28,21 @@ from .. import modes as _modes
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
-from ..session import Session as _Session
+
+def verify_spec(spec, mode=None):
+    """`spec` may be a path-like object or a Predicate.
+    by default, dope.modes.READ is selected for `mode`."""
+    if not isinstance(spec, _Predicate):
+        # assumes path-like object
+        try:
+            path = _pathlib.Path(spec).resolve()
+        except TypeError:
+            raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+        spec = _Predicate(mode=_modes.verify(mode),
+                          root=path.parent.parent,
+                          dataset=path.parent.name,
+                          subject=path.name)
+    return spec.with_values(mode=_modes.verify(mode))
 
 class Subject(_Container):
     """a container class representing a subject directory."""
@@ -49,30 +63,15 @@ class Subject(_Container):
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        if not isinstance(spec, _Predicate):
-            # assumes path-like object
-            try:
-                path = _pathlib.Path(spec).resolve()
-            except TypeError:
-                raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-            spec = _Predicate(mode=mode if mode is not None else _modes.READ,
-                              root=path.parent.parent,
-                              dataset=path.parent.name,
-                              subject=path.name)
-        else:
-            # validate and (if needed) modify the Predicate
-            level = spec.level
-            mode  = spec.mode if mode is None else mode
-            if level in (spec.NA, spec.ROOT, spec.DATASET):
-                raise ValueError(f"cannot specify a subject from the predicate level: '{level}'")
-            elif level != spec.SUBJECT:
-                spec = spec.with_values(mode=mode,
-                                        root=spec.root,
-                                        dataset=spec.dataset,
-                                        subject=spec.subject,
-                                        clear=True)
-            elif spec.mode != mode:
-                spec = spec.with_values(mode=mode)
+        spec = verify_spec(spec, mode=mode)
+        level = spec.level
+        if level in (spec.DATASET,):
+            raise ValueError(f"cannot specify a subject from the predicate level: '{level}'")
+        elif level != spec.SUBJECT:
+            spec = _Predicate(mode=spec.mode,
+                              root=spec.root,
+                              dataset=spec.dataset,
+                              subject=spec.subject)
 
         self._spec = spec
         self._path = spec.path
@@ -90,7 +89,8 @@ class Subject(_Container):
 
     @property
     def sessions(self):
-        return _Selector(self._spec, _Session)
+        from ..session import Session
+        return _Selector(self._spec, Session)
 
     def __getitem__(self, key):
         return self.sessions[key]

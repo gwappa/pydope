@@ -25,3 +25,26 @@
 import unittest
 from . import *
 from .. import modes, testing
+
+class DatasetTests(unittest.TestCase):
+    def setUp(self):
+        self._root = testing.test_dataset_path()
+
+    def test_initialize(self):
+        for mod in (modes.WRITE, modes.APPEND):
+            root = DataRoot(self._root, mode=mod) # should success
+        self.assertEqual(root.path, self._root)
+
+        with self.assertRaises(FileNotFoundError):
+            DataRoot(self._root, mode=modes.READ)
+
+        self._root.mkdir()
+        Dataset(self._root) # should success
+        self._root.rmdir()
+
+        with self.assertRaises(FileNotFoundError):
+            DataRoot(self._root)
+
+    def tearDown(self):
+        if self._root.exists():
+            self._root.rmdir()

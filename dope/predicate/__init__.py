@@ -164,19 +164,23 @@ class Predicate(_collections.namedtuple("_Predicate",
                 spec[fld] = newvalues.get(fld, default)
         return self.__class__(**spec)
 
+    def as_dataset(self, mode=None):
+        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
+                              root=self.root)
+
     def as_subject(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else mode,
+        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
                               root=self.root,
                               subject=self.subject)
 
     def as_session(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else mode,
+        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
                               root=self.root,
                               subject=self.subject,
                               session=self.session)
 
     def as_domain(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else mode,
+        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
                               root=self.root,
                               subject=self.subject,
                               session=session,

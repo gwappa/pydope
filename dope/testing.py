@@ -25,9 +25,9 @@
 from datetime import datetime
 from pathlib import Path
 
-def test_dataroot_path():
+def test_dataset_path():
     suffix = datetime.now().strftime("%y%m%d-%H%M%S-%f")
     root = Path(f"test{suffix}")
     if root.exists():
-        raise FileExistsError("cannot prepare a test data-root")
+        raise FileExistsError("cannot prepare a test dataset")
     return root

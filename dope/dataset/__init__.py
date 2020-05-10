@@ -21,66 +21,55 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
 import pathlib as _pathlib
 
 from .. import modes as _modes
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
-from ..subject import Subject as _Subject
+
+def verify_spec(spec, mode=None):
+    """spec: pathlike or Predicate"""
+    if not isinstance(spec, _Predicate):
+        try:
+            root = _pathlib.Path(spec)
+        except TypeError:
+            raise ValueError(f"DataRoot can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+        spec = _Predicate(mode=_modes.verify(mode), root=root)
+    return spec
 
 class Dataset(_Container):
-    """a container class representing a dataset directory."""
+    """a container class representing the dataset root directory."""
+
     @classmethod
     def is_valid_path(cls, path):
         """returns if the specified file path
-        represents a valid dataset."""
-        return (not path.name.startswith(".")) and (path.is_dir())
+        represents a valid dataroot."""
+        return False
 
     @classmethod
     def compute_path(cls, parentpath, key):
-        return parentpath / key
+        raise NotImplementedError(f"cannot use compute_path() for Dataset")
 
     @classmethod
     def from_parent(cls, parentspec, name):
-        return cls(parentspec.with_values(dataset=name))
+        raise NotImplementedError(f"cannot use from_parent() for Dataset")
 
-    def __init__(self, spec, mode=None):
-        """`spec` may be a path-like object or a Predicate.
-        by default, dope.modes.READ is selected for `mode`."""
-        if not isinstance(spec, _Predicate):
-            # assumes path-like object
-            try:
-                path = _pathlib.Path(spec).resolve()
-            except TypeError:
-                raise ValueError(f"Dataset can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-            if mode is None:
-                mode = _modes.READ
-            spec = _Predicate(mode=mode, root=path.parent, dataset=path.name)
-        else:
-            # validate and (if needed) modify the Predicate
-            level = spec.level
-            mode  = spec.mode if mode is None else mode
-            if level in (spec.NA, spec.ROOT):
-                raise ValueError(f"cannot specify a dataset from the predicate level: '{level}'")
-            elif level != spec.DATASET:
-                spec = spec.with_values(mode=mode, root=spec.root,
-                                        dataset=spec.dataset, clear=True)
-            elif spec.mode != mode:
-                spec = spec.with_values(mode=mode)
-
-        self._spec = spec
-        self._path = spec.path
-        if (self._spec.mode == _modes.READ) and (not self._path.exists()):
-            raise FileNotFoundError(f"dataset directory does not exist: {self._path}")
+    def __init__(self, spec, mode=_modes.READ):
+        """spec: pathlike or Predicate"""
+        self._spec = verify_spec(spec, mode=mode)
+        if (self._spec.mode == _modes.READ) and (not self._spec.root.exists()):
+            raise FileNotFoundError(f"dataset directory does not exist: {self._spec.root}")
 
     @property
     def path(self):
-        return self._path
+        return self._spec.root
 
     @property
     def subjects(self):
-        return _Selector(self._spec, _Subject)
+        from ..subject import Subject
+        return _Selector(self._spec, Subject)
 
     def __getitem__(self, key):
         return self.subjects[key]
