@@ -22,8 +22,6 @@
 # SOFTWARE.
 #
 
-import collections as _collections
-
 VERSION_STR = "0.1.0"
 
 defaults = {
@@ -36,7 +34,6 @@ defaults = {
 from .modes import *
 from .sessionspec import SessionSpec
 from .predicate import Predicate
-from .dataroot import DataRoot
 from .dataset import Dataset
 from .subject import Subject
 from .session import Session
@@ -44,6 +41,5 @@ from .domain import Domain
 from .datafile import DataFile
 
 # aliases
-Root     = DataRoot
 File     = DataFile
 Datafile = DataFile
