@@ -44,7 +44,9 @@ class Predicate(_collections.namedtuple("_Predicate",
                  "domain",
                  "file")),
                 _SelectionStatus, _DataLevels):
-    """a predicate specification to search the datasets."""
+    """a predicate to search the datasets.
+    the base class is also used to represent the specification
+    of concrete subjects, sessions etc."""
 
     def __new__(cls,
                 mode=None,
@@ -131,22 +133,22 @@ class Predicate(_collections.namedtuple("_Predicate",
     @property
     def subjects(self):
         """scans the dataset for existing subjects as Predicate objects."""
-        return self.iterate(self.SUBJECT)
+        return self.iterate_at_level(self.SUBJECT)
 
     @property
     def sessions(self):
         """scans the dataset for existing sessions as Predicate objects."""
-        return self.iterate(self.SESSION)
+        return self.iterate_at_level(self.SESSION)
 
     @property
     def domains(self):
         """scans the dataset for existing domains as Predicate objects."""
-        return self.iterate(self.DOMAIN)
+        return self.iterate_at_level(self.DOMAIN)
 
     @property
     def files(self):
         """scans the dataset for existing data files as Predicate objects."""
-        return self.iterate(self.FILE)
+        return self.iterate_at_level(self.FILE)
 
     def with_values(self, clear=False, **newvalues):
         """specifying 'clear=True' will fill all values
@@ -317,7 +319,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         else:
             raise RuntimeError(f"unexpected data-file specification in a predicate: {pred}")
 
-    def iterate(self, level=_DataLevels.FILE):
+    def iterate_at_level(self, level):
         """scans files using this Predicate context.
         returns a tuple consisting of SINGLE-selected Predicates.
         """
