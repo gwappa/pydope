@@ -173,8 +173,11 @@ class filespec(element):
     @classmethod
     def keyed_index(cls, fmt, key="run"):
         """reads single keyed index"""
+        if fmt.startswith(f"all{key}s"):
+            size = len(f"all{key}s")
+            return ParseResult(None, cls.format_remaining(fmt[size:]))
         if not fmt.startswith(key):
-            return ParseResult(None, fmt)
+            raise ParseError(f"file name does not contain '{key}'")
         fmt     = fmt[len(key):]
         indexed = cls.INDEX_PATTERN.match(fmt)
         if not indexed:
@@ -210,7 +213,16 @@ class filespec(element):
 
         res = dict()
         for key in cls.KEYS:
-            res[key], fmt = cls.keyed_index(fmt, key=key)
+            try:
+                result = cls.keyed_index(fmt, key=key)
+                res["type"]  = key
+                res["index"] = result.result
+                fmt    = result.remaining
+            except ParseError:
+                pass
+        if "type" not in res.keys():
+            res["type"]  = None
+            res["index"] = None
 
         channels = []
         chan     = cls.channel(fmt)

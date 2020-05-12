@@ -23,6 +23,7 @@
 #
 import collections as _collections
 from ..core import SelectionStatus as _SelectionStatus
+from .. import parsing as _parsing
 
 def parse_repeated(item, parsefun, separators=(",", "/", "+", "-")):
     """tests if the string `item` consists of a repetition of
@@ -103,38 +104,58 @@ def validate_channels(channels):
         return channels
 
 class FileSpec(_collections.namedtuple("_FileSpec",
-                ("suffix", "trial", "run", "channel")), _SelectionStatus):
+                ("suffix", "type", "index", "channel")), _SelectionStatus):
     DIGITS = 5
 
-    def __new__(cls, suffix=None, trial=None, run=None, channel=None):
+    def __new__(cls, suffix=None, trial=None, run=None, channel=None, type=None, index=None):
+        if type is not None:
+            # use type/index mode
+            if trial is not None:
+                raise ValueError("cannot specify 'trial' when 'type' is specified")
+            elif run is not None:
+                raise ValueError("cannot specify 'run' when 'type' is specified")
+            if type not in ("trial", "run"):
+                raise ValueError(f"string ('trial' or 'run') was expected for 'type', but got '{type}'")
+            index = validate_index(index, f"{type} index")
+        else:
+            # trial/run mode
+            if (trial is not None) and (run is not None):
+                raise ValueError("trial and run cannot be specified at the same time")
+            elif trial is None:
+                typ = "run"
+                index = validate_index(run, "run index")
+            else:
+                typ = "trial"
+                index = validate_index(trial, "trial index")
+        if (type is None) and (index is not None):
+            raise ValueError("cannot specify index when 'type' is not specified")
         return super(cls, FileSpec).__new__(cls,
                         suffix=validate_suffix(suffix),
-                        trial=validate_index(trial, "trial index"),
-                        run=validate_index(run, "run index"),
+                        type=type,
+                        index=index,
                         channel=validate_channels(channel))
 
-    @property
-    def status(self):
-        return self.compute_status(None)
+    @classmethod
+    def from_path(cls, path):
+        spec, _ = _parsing.file.parse(path.name)
+        return cls(**spec)
 
-    def compute_status(self, context=None):
-        # TODO
-        if context is None:
-            unspecified = (((self.trial is None) and (self.run is None)),
-                           self.channel is None,
-                           self.suffix is None)
-            if all(unspecified):
-                return self.UNSPECIFIED
-            elif any(callable(fld) for fld in self):
-                return self.DYNAMIC
-            elif any(unspecified):
-                return self.MULTIPLE
-            elif any(((not isinstance(fld, str)) and hasattr(fld, "__iter__")) for fld in self):
-                return self.MULTIPLE
-            else:
-                return self.SINGLE
-        else:
-            raise NotImplementedError("FileSpec.compute_status()")
+    def compute_write_status(self):
+        status_set = dict((fld, _SelectionStatus.compute_write_status(getattr(self, fld)) \
+                        for fld in ("suffix", "index", "channel"))
+        # being NONE or DYNAMIC supercedes everything (in this order)
+        for status in (self.NONE, self.DYNAMIC):
+            if status in status_set.values():
+                return status
+
+        # otherwise: status can be either MULTIPLE, SINGLE or UNSPECIFIED
+        # where MULTIPLE is not allowed for suffix or index in a single file
+        if self.MULTIPLE in [status_set[key] for key in ("suffix", "index")]:
+            return self.MULTIPLE
+
+        # otherwise every combination can be represented as SINGLE
+        return self.SINGLE
+
 
     def compute_path(self, context):
         """context: Predicate"""
@@ -148,19 +169,15 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         return f"{context.subject}_{context.session.name}_{context.domain}{runtxt}{chtxt}{sxtxt}"
 
     def format_run(self, digits=None):
-        if digits is None:
-            digits = self.DIGITS
-        if self.trial is None:
-            if self.run is None:
-                return ""
-            elif not isinstance(self.run, int):
-                raise ValueError(f"cannot compute a run representation from run index: {self.run}")
-            else:
-                return "_run" + str(self.run).zfill(digits)
-        elif not isinstance(self.trial, int):
-            raise ValueError(f"cannot compute a trial representation from trial index: {self.trial}")
+        if self.type is None:
+            return ""
+        elif isinstance(self.index, int):
+            if digits is None:
+                digits = self.DIGITS
+            return f"_{self.type}{str(self.index).zfill(digits)}"
         else:
-            return "_trial" + str(self.trial).zfill(digits)
+            # type is not None, index is None
+            return f"_all{self.type}s"
 
     def format_channel(self, context):
         if self.channel is None:
@@ -181,8 +198,13 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             return self.suffix
 
     def with_values(self, **kwargs):
-        spec = dict(**kwargs)
-        for fld in self._fields:
-            if fld not in spec.keys():
-                spec[fld] = getattr(self, fld)
+        spec = {}
+        if "type" in kwargs.keys():
+            spec[kwargs["type"]] = kwargs.get("index", self.index)
+        else:
+            for key in ("run", "trial"):
+                if key in kwargs.keys():
+                    spec[key] = kwargs[key]
+        for fld in ("suffix", "channel"):
+            spec[fld] = kwargs.get(fld, getattr(self, fld))
         return self.__class__(**spec)
