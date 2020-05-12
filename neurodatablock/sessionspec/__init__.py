@@ -65,10 +65,6 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
         raise NotImplementedError("SessionSpec.test()")
 
     @property
-    def status(self):
-        return self.compute_status(None)
-
-    @property
     def name(self):
         """returns the session specification as it appears on directory names."""
         return self.format()
@@ -83,18 +79,9 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     def cleared(self):
         return self.__class__(None,None,None)
 
-    def compute_status(self, context=None):
-        # TODO
-        if context is None:
-            stat = tuple(fld is None for fld in self)
-            if all(stat):
-                return self.UNSPECIFIED
-            elif any(stat):
-                return self.MULTIPLE
-            else:
-                return self.SINGLE
-        else:
-            raise NotImplementedError("SessionSpec.compute_status()")
+    def compute_write_status(self):
+        return _SelectionStatus.combine(_SelectionStatus.compute_write_status(fld) \
+                    for fld in self)
 
     def compute_path(self, context):
         """context: Predicate"""

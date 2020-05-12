@@ -36,26 +36,6 @@ from ..filespec import FileSpec as _FileSpec
 
 from . import validate as _validate
 
-def compute_selection_status(spec):
-    """returns the status of root/dataset/subject/domain selection."""
-    if isinstance(spec, (str, bytes, _pathlib.Path)):
-        return _SelectionStatus.SINGLE
-    elif spec is None:
-        return _SelectionStatus.UNSPECIFIED
-    elif callable(spec):
-        return _SelectionStatus.DYNAMIC
-    elif iterable(spec):
-        size = len(spec)
-        if size == 1:
-            return _SelectionStatus.SINGLE
-        elif size == 0:
-            return _SelectionStatus.NONE
-        else:
-            return _SelectionStatus.MULTIPLE
-    else:
-        raise ValueError(f"unexpected specification: {spec}")
-
-
 class Predicate(_collections.namedtuple("_Predicate",
                 ("mode",
                  "root",
@@ -148,6 +128,26 @@ class Predicate(_collections.namedtuple("_Predicate",
     def domain_path(self):
         return self.compute_domain_path()
 
+    @property
+    def subjects(self):
+        """scans the dataset for existing subjects as Predicate objects."""
+        return self.iterate(self.SUBJECT)
+
+    @property
+    def sessions(self):
+        """scans the dataset for existing sessions as Predicate objects."""
+        return self.iterate(self.SESSION)
+
+    @property
+    def domains(self):
+        """scans the dataset for existing domains as Predicate objects."""
+        return self.iterate(self.DOMAIN)
+
+    @property
+    def files(self):
+        """scans the dataset for existing data files as Predicate objects."""
+        return self.iterate(self.FILE)
+
     def with_values(self, clear=False, **newvalues):
         """specifying 'clear=True' will fill all values
         (but `mode` and `root`) with None unless
@@ -191,38 +191,46 @@ class Predicate(_collections.namedtuple("_Predicate",
 
     def compute_status(self):
         """returns a string representation for the status of specification."""
+        if self.mode == _modes.READ:
+            return self._read_status()
+        else:
+            return self._write_status()
+
+    def _write_status(self):
         if any(callable(item) for item in self):
             return self.DYNAMIC
 
         lev = self.level
+        if lev == self.ROOT:
+            return _SelectionStatus.SINGLE
 
-        status = compute_selection_status(self.root)
-        if (lev == self.ROOT) or (status != self.SINGLE):
+        status = _SelectionStatus.compute_write_status(self.subject)
+        if (lev == self.SUBJECT) or (status != _SelectionStatus.SINGLE):
             return status
 
-        status = self.compute_subject_status()
-        if (lev == self.SUBJECT) or (status != self.SINGLE):
+        status = self.session.compute_write_status()
+        if (lev == self.SESSION) or (status != _SelectionStatus.SINGLE):
             return status
 
-        status = self.session.compute_status(self)
-        if (lev == self.SESSION) or (status != self.SINGLE):
+        status = _SelectionStatus.compute_write_status(self.domain)
+        if (lev == self.DOMAIN) or (status != _SelectionStatus.SINGLE):
             return status
 
-        status = self.compute_domain_status()
-        if (lev == self.DOMAIN) or (status != self.SINGLE):
-            return status
+        return self.file.compute_write_status()
 
-        return self.file.compute_status(self)
-
-    def compute_subject_status(self):
-        # TODO
-        raise NotImplementedError("Predicate.compute_subject_status()")
-        return compute_selection_status(self.subject)
-
-    def compute_domain_status(self):
-        # TODO
-        raise NotImplementedError("Predicate.compute_domain_status")
-        return compute_selection_status(self.domain)
+    def _read_status(self):
+        """uses iterate() functionality to check selection status."""
+        lev = self.level
+        if lev == self.ROOT:
+            return self.SINGLE
+        elif lev == self.SUBJECT:
+            return _SelectionStatus.compute_read_status(self.subjects)
+        elif lev == self.SESSION:
+            return _SelectionStatus.compute_read_status(self.sessions)
+        elif lev == self.DOMAIN:
+            return _SelectionStatus.compute_read_status(self.domains)
+        elif lev == self.FILE:
+            return _SelectionStatus.compute_read_status(self.files)
 
     def compute_path(self):
         """returns a simulated path object if and only if this Predicate
@@ -313,7 +321,27 @@ class Predicate(_collections.namedtuple("_Predicate",
         """scans files using this Predicate context.
         returns a tuple consisting of SINGLE-selected Predicates.
         """
-        raise NotImplementedError("Predicate.iterate")
+        if level == _DataLevels.ROOT:
+            return (self,)
+        elif level == _DataLevels.SUBJECT:
+            return tuple(self.with_values(subject=path.name) \
+                    for path in self._iter_subject_directories())
+        elif level == _DataLevels.SESSION:
+            return tuple(self.with_values(subject=path.parent.name,
+                                          session=_SessionSpec(path.name)) \
+                        for path in self._iter_session_directories())
+        elif level == _DataLevels.DOMAIN:
+            return tuple(self.with_values(subject=path.parent.parent.name,
+                                          session=_SessionSpec(path.parent.name),
+                                          domain=path.name)) \
+                        for path in self._iter_domain_directories())
+        elif level == _DataLevels.FILE:
+            return tuple(self.with_values(subject=path.parent.parent.parent.name,
+                                          session=_SessionSpec(path.parent.parent.name),
+                                          domain=path.parent.name,
+                                          file=_FileSpec.from_path(path)))
+        else:
+            raise ValueError(f"unknown data level to iterate: '{level}'")
 
     def _iter_subject_directories(self):
         """scans subject directories using this Predicate context.
