@@ -1,3 +1,3 @@
-# pydope
+# python-neurodatablock
 
-a reference Python implementation for the DOPE data format.
+a reference Python implementation for the `neurodatablock` data format.
