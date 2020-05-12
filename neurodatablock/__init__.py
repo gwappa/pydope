@@ -33,6 +33,9 @@ defaults = {
 }
 
 from .modes import *
+from . import status
+from . import levels
+
 from .sessionspec import SessionSpec
 from .predicate import Predicate
 from .dataset import Dataset
