@@ -25,50 +25,43 @@
 import pathlib as _pathlib
 
 from .. import modes as _modes
+from .. import levels as _levels
+
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
+from ..sessionspec import SessionSpec as _SessionSpec
+from ..filespec import FileSpec as _FileSpec
 
-def parse_spec_from_path(path):
-    raise NotImplementedError("dope.datafile.parse_spec_from_path()")
+def validate(spec, mode=None):
+    """`spec` may be a path-like object or a Predicate.
+    by default, dope.modes.READ is selected for `mode`."""
+    if not isinstance(spec, _Predicate):
+        try:
+            path = _pathlib.Path(spec).resolve()
+        except TypeError:
+            raise ValueError(f"DataFile can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+        domdir  = path.parent
+        sessdir = domdir.parent
+        subdir  = sessdir.parent
+        root    = subdir.parent
+        spec = _Predicate(root=root,
+                          subject=subdir.name,
+                          session=_SessionSpec(sessdir.name),
+                          domain=domdir.name,
+                          file=_FileSpec(path.name))
+    return spec.with_values(mode=_modes.validate(mode))
 
 class DataFile(_Container):
     """a container class representing a data file."""
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid session."""
-        if path.name.startswith(".") or path.is_dir():
-            return False
-        try:
-            parsed = parse_spec_from_path(path)
-            return True
-        except ValueError:
-            return False
-
-    @classmethod
-    def from_parent(cls, parentspec, key):
-        raise NotImplementedError("dope.datafile.DataFile.from_parent()")
 
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        if not isinstance(spec, _Predicate):
-            # assumes path-like object
-            try:
-                path = _pathlib.Path(spec).resolve()
-            except TypeError:
-                raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-            spec = _Predicate(mode=mode if mode is not None else _modes.READ,
-                              **parse_spec_from_path(path))
-        else:
-            # validate and (if needed) modify the Predicate
-            level = spec.level
-            mode  = spec.mode if mode is None else mode
-            if level != spec.FILE:
-                raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
-            elif spec.mode != mode:
-                spec = spec.with_values(mode=mode)
+        spec  = validate(spec, mode=mode)
+        level = spec.level
+        if level != _levels.FILE:
+            raise ValueError(f"cannot specify a data file from the predicate level: '{level}'")
 
         self._spec = spec
         self._path = spec.path
@@ -76,8 +69,40 @@ class DataFile(_Container):
             raise FileNotFoundError(f"data file does not exist: {self._path}")
 
     @property
-    def path(self):
-        return self._path
+    def name(self):
+        return self._spec.file.format_name()
+
+    @property
+    def trial(self):
+        if self._spec.file.type != "trial":
+            raise ValueError("this datafile is not specified as trial-related")
+        return self._spec.file.index
+
+    @property
+    def run(self):
+        if self._spec.file.type != "run":
+            raise ValueError("this datafile is not specified in terms of runs")
+        return self._spec.file.index
+
+    @property
+    def run_type(self):
+        return self._spec.file.type
+
+    @property
+    def index(self):
+        return self._spec.file.index
+
+    @property
+    def channel(self):
+        return self._spec.file.channel
+
+    @property
+    def suffix(self):
+        return self._spec.file.suffix
+
+    @property
+    def file_specs(self):
+        return self._spec.file
 
     @property
     def dataset(self):

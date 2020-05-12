@@ -29,47 +29,51 @@ from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 
-def verify_spec(spec, mode=None):
+def validate(spec, mode=None):
     """spec: pathlike or Predicate"""
     if not isinstance(spec, _Predicate):
-        try:
-            root = _pathlib.Path(spec)
-        except TypeError:
-            raise ValueError(f"DataRoot can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-        spec = _Predicate(mode=_modes.verify(mode), root=root)
-    return spec
+        if spec is None:
+            root = _pathlib.Path()
+        else:
+            try:
+                root = _pathlib.Path(spec)
+            except TypeError:
+                raise ValueError(f"Dataset can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+        spec = _Predicate(root=root)
+    return spec.with_values(mode=_modes.validate(mode))
 
 class Dataset(_Container):
     """a container class representing the dataset root directory."""
 
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid dataroot."""
-        return False
-
-    @classmethod
-    def compute_path(cls, parentpath, key):
-        raise NotImplementedError(f"cannot use compute_path() for Dataset")
-
-    @classmethod
-    def from_parent(cls, parentspec, name):
-        raise NotImplementedError(f"cannot use from_parent() for Dataset")
-
     def __init__(self, spec, mode=_modes.READ):
         """spec: pathlike or Predicate"""
-        self._spec = verify_spec(spec, mode=mode)
+        self._spec = validate(spec, mode=mode)
         if (self._spec.mode == _modes.READ) and (not self._spec.root.exists()):
             raise FileNotFoundError(f"dataset directory does not exist: {self._spec.root}")
 
-    @property
-    def path(self):
-        return self._spec.root
+    def __getattr__(self, name):
+        if name == "_path":
+            return self._spec.root
 
     @property
     def subjects(self):
         from ..subject import Subject
-        return _Selector(self._spec, Subject)
+        return _Selector(self._spec, _levels.SUBJECT, container=Subject)
+
+    @property
+    def sessions(self):
+        from ..session import Session
+        return tuple(Session(spec) for spec in self._spec.sessions)
+
+    @property
+    def domains(self):
+        from ..domain import Domain
+        return tuple(Domain(spec) for spec in self._spec.domains)
+
+    @property
+    def files(self):
+        from ..datafile import DataFile
+        return tuple(DataFile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
         return self.subjects[key]

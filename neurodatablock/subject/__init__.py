@@ -25,11 +25,12 @@
 import pathlib as _pathlib
 
 from .. import modes as _modes
+from .. import levels as _levels
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 
-def verify_spec(spec, mode=None):
+def validate(spec, mode=None):
     """`spec` may be a path-like object or a Predicate.
     by default, dope.modes.READ is selected for `mode`."""
     if not isinstance(spec, _Predicate):
@@ -38,49 +39,35 @@ def verify_spec(spec, mode=None):
             path = _pathlib.Path(spec).resolve()
         except TypeError:
             raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
-        spec = _Predicate(mode=_modes.verify(mode),
-                          root=path.parent.parent,
+        spec = _Predicate(root=path.parent.parent,
                           dataset=path.parent.name,
                           subject=path.name)
-    return spec.with_values(mode=_modes.verify(mode))
+    return spec.with_values(mode=_modes.validate(mode))
 
 class Subject(_Container):
     """a container class representing a subject directory."""
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid subject."""
-        return (not path.name.startswith(".")) and (path.is_dir())
-
-    @classmethod
-    def compute_path(cls, parentpath, key):
-        return parentpath / key
-
-    @classmethod
-    def from_parent(cls, parentspec, name):
-        return cls(parentspec.with_values(subject=name))
 
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        spec = verify_spec(spec, mode=mode)
+        spec = validate(spec, mode=mode)
         level = spec.level
-        if level in (spec.DATASET,):
+        if level in (_levels.DATASET,):
             raise ValueError(f"cannot specify a subject from the predicate level: '{level}'")
-        elif level != spec.SUBJECT:
+        elif level != _levels.SUBJECT:
             spec = _Predicate(mode=spec.mode,
                               root=spec.root,
                               dataset=spec.dataset,
                               subject=spec.subject)
 
         self._spec = spec
-        self._path = spec.path
+        self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"subject directory does not exist: {self._path}")
 
     @property
-    def path(self):
-        return self._path
+    def name(self):
+        return self._spec.subject
 
     @property
     def dataset(self):
@@ -90,7 +77,17 @@ class Subject(_Container):
     @property
     def sessions(self):
         from ..session import Session
-        return _Selector(self._spec, Session)
+        return _Selector(self._spec, _levels.SESSION, container=Session)
+
+    @property
+    def domains(self):
+        from ..domain import Domain
+        return tuple(Domain(spec) for spec in self._spec.domains)
+
+    @property
+    def files(self):
+        from ..datafile import DataFile
+        return tuple(DataFile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
         return self.sessions[key]

@@ -25,11 +25,12 @@
 import pathlib as _pathlib
 
 from .. import modes as _modes
+from .. import levels as _levels
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 
-def verify_spec(spec, mode=None):
+def validate(spec, mode=None):
     """`spec` may be a path-like object or a Predicate.
     by default, dope.modes.READ is selected for `mode`."""
     if not isinstance(spec, _Predicate):
@@ -37,39 +38,29 @@ def verify_spec(spec, mode=None):
         try:
             path = _pathlib.Path(spec).resolve()
         except TypeError:
-            raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+            raise ValueError(f"Domain can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
         sessdir = path.parent
         subdir  = sessdir.parent
         dsdir   = subdir.parent
         rootdir = dsdir.parent
-        spec = _Predicate(mode=_modes.verify(mode),
-                          root=rootdir,
+        spec = _Predicate(root=rootdir,
                           dataset=dsdir.name,
                           subject=subdir.name,
                           sessionspec=_SessionSpec(sessdir.name),
                           domain=path.name)
-    return spec.with_values(mode=_modes.verify(mode))
+    return spec.with_values(mode=_modes.validate(mode))
 
 class Domain(_Container):
     """a container class representing a domain directory."""
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid domain."""
-        return (not path.name.startswith(".")) and (path.is_dir())
-
-    @classmethod
-    def from_parent(cls, parentspec, key):
-        return cls(parentspec.with_values(domain=key))
 
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        spec = verify_spec(spec, mode=mode)
+        spec = validate(spec, mode=mode)
         level = spec.level
-        if level in (spec.ROOT, spec.SUBJECT, spec.SESSION):
+        if level in (_levels.ROOT, _levels.SUBJECT, _levels.SESSION):
             raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
-        elif level != spec.DOMAIN:
+        elif level != _levels.DOMAIN:
             spec = _Predicate(mode=spec.mode,
                               root=spec.root,
                               dataset=spec.dataset,
@@ -78,13 +69,13 @@ class Domain(_Container):
                               domain=spec.domain)
 
         self._spec = spec
-        self._path = spec.path
+        self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"domain directory does not exist: {self._path}")
 
     @property
-    def path(self):
-        return self._path
+    def name(self):
+        return self._spec.domain
 
     @property
     def dataset(self):
@@ -104,7 +95,7 @@ class Domain(_Container):
     @property
     def files(self):
         from ..datafile import DataFile
-        return _Selector(self._spec, DataFile)
+        return _Selector(self._spec, _levels.FILE, DataFile)
 
     def __getitem__(self, key):
         return self.files[key]

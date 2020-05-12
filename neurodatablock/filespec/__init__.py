@@ -107,6 +107,14 @@ def validate_channels(channels):
 class FileSpec(_collections.namedtuple("_FileSpec",
                 ("suffix", "type", "index", "channel"))):
     def __new__(cls, suffix=None, trial=None, run=None, channel=None, type=None, index=None):
+        try:
+            spec, _ = _parsing.file.parse(suffix.name)
+            suffix  = spec["suffix"]
+            type    = spec["type"]
+            index   = spec["index"]
+            channel = spec["channel"]
+        except: # any type of error
+            pass
         if type is not None:
             # use type/index mode
             if trial is not None:
@@ -133,11 +141,6 @@ class FileSpec(_collections.namedtuple("_FileSpec",
                         type=type,
                         index=index,
                         channel=validate_channels(channel))
-
-    @classmethod
-    def from_path(cls, path):
-        spec, _ = _parsing.file.parse(path.name)
-        return cls(**spec)
 
     def compute_write_status(self):
         status_set = dict((fld, _status.compute_write_status(getattr(self, fld)) \

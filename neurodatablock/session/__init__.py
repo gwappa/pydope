@@ -25,30 +25,14 @@
 import pathlib as _pathlib
 
 from .. import modes as _modes
+from .. import levels as _levels
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
 from ..sessionspec import SessionSpec as _SessionSpec
 from .. import parsing as _parsing
 
-def verify_sessionspec(sspec, accept_empty=False):
-    if sspec is None:
-        if accept_none == True:
-            return _SessionSpec()
-        else:
-            raise ValueError("invalid session specification (None is set)")
-    elif isinstance(sspec, _SessionSpec):
-        return sspec
-    elif isinstance(sspec, str):
-        return _SessionSpec(sspec)
-    elif all(hasattr(sspec, attr) for attr in ("keys", "values", "items")):
-        return _SessionSpec(**sspec)
-    elif hasattr(sspec, "__iter__"):
-        return _SessionSpec(*sspec)
-    else:
-        raise ValueError(f"unexpected session specification: '{sspec}'")
-
-def verify_spec(spec, mode=None):
+def validate(spec, mode=None):
     """`spec` may be a path-like object or a Predicate.
     by default, dope.modes.READ is selected for `mode`."""
     if not isinstance(spec, _Predicate):
@@ -56,56 +40,56 @@ def verify_spec(spec, mode=None):
         try:
             path = _pathlib.Path(spec).resolve()
         except TypeError:
-            raise ValueError(f"Subject can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+            raise ValueError(f"Session can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
         subdir  = path.parent
         dsdir   = subdir.parent
         rootdir = dsdir.parent
-        spec = _Predicate(mode=_modes.verify(mode),
-                          root=rootdir,
+        spec = _Predicate(root=rootdir,
                           dataset=dsdir.name,
                           subject=subdir.name,
                           sessionspec=_SessionSpec(path.name))
-    return spec.with_values(mode=_modes.verify(mode))
+    return spec.with_values(mode=_modes.validate(mode))
 
 class Session(_Container):
     """a container class representing a session directory."""
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid session."""
-        if path.name.startswith(".") or (not path.is_dir()):
-            return False
-        try:
-            spec = _parsing.session.name(path.name)
-            return True
-        except ValueError:
-            return False
-
-    @classmethod
-    def from_parent(cls, parentspec, key):
-        return cls(parentspec.with_values(session=verify_sessionspec(key, accept_empty=False)))
 
     def __init__(self, spec, mode=None):
         """`spec` may be a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
-        spec  = verify_spec(spec, mode=mode)
+        spec  = validate(spec, mode=mode)
         level = spec.level
-        if level in (spec.ROOT, spec.SUBJECT):
+        if level in (_levels.ROOT, _levels.SUBJECT):
             raise ValueError(f"cannot specify a session from the predicate level: '{level}'")
-        elif level != spec.SESSION:
+        elif level != _levels.SESSION:
             spec = _Predicate(mode=spec.mode,
                               root=spec.root,
                               dataset=spec.dataset,
                               subject=spec.subject,
                               session=spec.session)
         self._spec = spec
-        self._path = spec.path
+        self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"session directory does not exist: {self._path}")
 
     @property
-    def path(self):
-        return self._path
+    def name(self):
+        return self._spec.session.name
+
+    @property
+    def session_type(self):
+        return self._spec.session.type
+
+    @property
+    def date(self):
+        return self._spec.session.date
+
+    @property
+    def index(self):
+        return self._spec.session.index
+
+    @property
+    def session_specs(self):
+        return self._spec.session
 
     @property
     def dataset(self):
@@ -120,8 +104,13 @@ class Session(_Container):
     @property
     def domains(self):
         from ..domain import Domain
-        return _Selector(self._spec, Domain)
+        return _Selector(self._spec, _levels.DOMAIN, container=Domain)
+
+    @property
+    def files(self):
+        from ..datafile import DataFile
+        return tuple(DataFile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
-        """`key` may be either a string or a tuple of string (incl. SessionSpec)."""
+        """`key` must be  a string."""
         return self.domains[key]

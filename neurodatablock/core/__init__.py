@@ -48,16 +48,21 @@ class Container: # TODO: better renamed as `Context`?
             from ..datafile import Datafile
             return Datafile(spec)
 
+    @property
+    def root(self):
+        return self._spec.root
+
     def with_mode(self, mode):
         """changes the I/O mode of this container."""
         return self.__class__(self._spec.with_values(mode=mode))
 
 class Selector:
     """an adaptor class used to select from child components."""
-    def __init__(self, spec, level):
+    def __init__(self, spec, level, container=None):
         self._spec  = spec
         self._path  = spec.compute_path()
         self._level = _levels.validate(level)
+        self._container = container
 
     def __iter__(self):
         if not self._path.exists():
@@ -75,7 +80,10 @@ class Selector:
                 raise FileNotFoundError(f"container path does not exist: {parent}")
             if not child.compute_path().exists():
                 raise FileNotFoundError(f"item does not exist: {child}")
-        return Container.newinstance(child)
+        if self._container is not None:
+            return self._container(child)
+        else:
+            return Container.newinstance(child)
 
 class FormattingWarning(UserWarning):
     pass

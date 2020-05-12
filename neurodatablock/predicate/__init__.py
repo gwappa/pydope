@@ -338,7 +338,7 @@ class Predicate(_collections.namedtuple("_Predicate",
             return tuple(self.with_values(subject=path.parent.parent.parent.name,
                                           session=_SessionSpec(path.parent.parent.name),
                                           domain=path.parent.name,
-                                          file=_FileSpec.from_path(path)))
+                                          file=_FileSpec(path)))
         else:
             raise ValueError(f"unknown data level to iterate: '{level}'")
 
