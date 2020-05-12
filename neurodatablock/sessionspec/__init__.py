@@ -26,7 +26,7 @@ import re as _re
 import collections as _collections
 import datetime as _datetime
 
-from .. import defaults
+from .. import defaults as _defaults
 from .. import status as _status
 from .. import parsing as _parsing
 
@@ -99,7 +99,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     def _format_type(self, default=None):
        if self.type is None:
            if default is None:
-               default = defaults["session.nospec.type"]
+               default = _defaults["session.nospec.type"]
            return str(default)
        else:
            return self.type
@@ -107,20 +107,20 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     def _format_date(self, default=None):
        if self.date is None:
            if default is None:
-               default = defaults["session.nospec.date"]
+               default = _defaults["session.nospec.date"]
            return str(default)
        else:
            return self.date.strftime(_parsing.session.DATE_FORMAT)
 
     def _format_index(self, digits=None, default=None):
        if digits is None:
-           digits = defaults["session.index.width"]
+           digits = _defaults["session.index.width"]
        if not isinstance(digits, int):
            raise ValueError(f"'digits' expected to be int, got {digits.__class__}")
 
        if self.index is None:
            if default is None:
-               default = defaults["session.nospec.index"]
+               default = _defaults["session.nospec.index"]
            return str(default)
        else: # assumes int
            base = str(self.index)

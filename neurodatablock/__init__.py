@@ -25,6 +25,7 @@
 VERSION_STR = "0.1.0"
 
 defaults = {
+    "run.index.width":      5,
     "session.index.width":  3,
     "session.nospec.type":  "<any>",
     "session.nospec.date":  "<any-date>",

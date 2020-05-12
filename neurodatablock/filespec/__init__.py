@@ -24,6 +24,7 @@
 import collections as _collections
 from .. import status as _status
 from .. import parsing as _parsing
+from .. import defaults as _defaults
 
 def parse_repeated(item, parsefun, separators=(",", "/", "+", "-")):
     """tests if the string `item` consists of a repetition of
@@ -105,8 +106,6 @@ def validate_channels(channels):
 
 class FileSpec(_collections.namedtuple("_FileSpec",
                 ("suffix", "type", "index", "channel"))):
-    DIGITS = 5
-
     def __new__(cls, suffix=None, trial=None, run=None, channel=None, type=None, index=None):
         if type is not None:
             # use type/index mode
@@ -173,7 +172,7 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             return ""
         elif isinstance(self.index, int):
             if digits is None:
-                digits = self.DIGITS
+                digits = _defaults["run.index.width"]
             return f"_{self.type}{str(self.index).zfill(digits)}"
         else:
             # type is not None, index is None
