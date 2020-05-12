@@ -59,6 +59,11 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
     def __str__(self):
         return self.name
 
+    def test(self, spec):
+        """returns if another SessionSpec object
+        matches the specification of this object."""
+        raise NotImplementedError("SessionSpec.test()")
+
     @property
     def status(self):
         return self.compute_status(None)

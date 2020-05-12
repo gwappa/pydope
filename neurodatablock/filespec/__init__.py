@@ -36,13 +36,13 @@ def parse_repeated(item, parsefun, separators=(",", "/", "+", "-")):
     # otherwise
     return None
 
-def parse_index(index, label="index"):
+def validate_index(index, label="index"):
     if index is None:
         return None
     elif isinstance(index, int):
         return index
     elif isinstance(index, str):
-        is_repeat = parse_repeated(index, parse_index)
+        is_repeat = parse_repeated(index, validate_index)
         if is_repeat is not None:
             return is_repeat
         # otherwise: assumed to be a single index repr
@@ -57,18 +57,18 @@ def parse_index(index, label="index"):
             raise ValueError(f"{label} cannot be negative (got {idx})")
         return idx
     elif hasattr(index, "__iter__"):
-        parsed = [parse_index(i, label) for i in index]
+        parsed = [validate_index(i, label) for i in index]
         return tuple(item for item in parsed if item is not None)
     elif callable(index):
         return index
     else:
         raise ValueError(f"unexpected {label} type: '{index}'")
 
-def parse_suffix(suffix):
+def validate_suffix(suffix):
     if suffix is None:
         return None
     elif isinstance(suffix, str):
-        is_repeat = parse_repeated(suffix, parse_suffix)
+        is_repeat = parse_repeated(suffix, validate_suffix)
         if is_repeat is not None:
             return is_repeat
         # otherwise: assumed to be a single suffix repr
@@ -80,24 +80,24 @@ def parse_suffix(suffix):
         else:
             return suffix
     elif hasattr(suffix, "__iter__"):
-        parsed = [parse_suffix(s) for s in suffix]
+        parsed = [validate_suffix(s) for s in suffix]
         return tuple(item for item in parsed if item is not None)
     elif callable(suffix):
         return suffix
     else:
         raise ValueError(f"unexpected suffix: '{suffix}'")
 
-def parse_channels(channels):
+def validate_channels(channels):
     if channels is None:
         return None
     elif isinstance(channels, str):
-        is_repeat = parse_repeated(channels, parse_channels)
+        is_repeat = parse_repeated(channels, validate_channels)
         if is_repeat is not None:
             return is_repeat
         # otherwise: assume to be a single channel repr
         return channels
     elif hasattr(channels, "__iter__"):
-        parsed = [parse_channels(chan) for chan in channels]
+        parsed = [validate_channels(chan) for chan in channels]
         return tuple(item for item in parsed if item is not None)
     elif callable(channels):
         return channels
@@ -108,10 +108,10 @@ class FileSpec(_collections.namedtuple("_FileSpec",
 
     def __new__(cls, suffix=None, trial=None, run=None, channel=None):
         return super(cls, FileSpec).__new__(cls,
-                        suffix=parse_suffix(suffix),
-                        trial=parse_index(trial, "trial index"),
-                        run=parse_index(run, "run index"),
-                        channel=parse_channels(channel))
+                        suffix=validate_suffix(suffix),
+                        trial=validate_index(trial, "trial index"),
+                        run=validate_index(run, "run index"),
+                        channel=validate_channels(channel))
 
     @property
     def status(self):

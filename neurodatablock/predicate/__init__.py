@@ -24,14 +24,17 @@
 
 import collections as _collections
 import pathlib as _pathlib
+import warnings as _warnings
 
 from .. import modes as _modes
+from .. import parsing as _parsing
 from ..core import SelectionStatus as _SelectionStatus
 from ..core import DataLevels as _DataLevels
+from ..core import FormattingWarning as _FormattingWarning
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
 
-from . import parse as _parse
+from . import validate as _validate
 
 def compute_selection_status(spec):
     """returns the status of root/dataset/subject/domain selection."""
@@ -73,11 +76,11 @@ class Predicate(_collections.namedtuple("_Predicate",
                 **specs):
         return super(cls, Predicate).__new__(cls,
                         _modes.verify(mode),
-                        _parse.root(root),
-                        _parse.item_default(subject, "subject"),
-                        _parse.session(session=session, **specs),
-                        _parse.item_default(domain, "domain"),
-                        _parse.file(file=file, **specs))
+                        _validate.root(root),
+                        _validate.item_default(subject, "subject"),
+                        _validate.session(session=session, **specs),
+                        _validate.item_default(domain, "domain"),
+                        _validate.file(file=file, **specs))
 
     @property
     def level(self):
@@ -213,10 +216,12 @@ class Predicate(_collections.namedtuple("_Predicate",
 
     def compute_subject_status(self):
         # TODO
+        raise NotImplementedError("Predicate.compute_subject_status()")
         return compute_selection_status(self.subject)
 
     def compute_domain_status(self):
         # TODO
+        raise NotImplementedError("Predicate.compute_domain_status")
         return compute_selection_status(self.domain)
 
     def compute_path(self):
@@ -250,3 +255,124 @@ class Predicate(_collections.namedtuple("_Predicate",
 
     def compute_domain_path(self):
         return self.session.compute_path(self) / self.domain
+
+    def _test_name_default(self, attr, name):
+        """returns True if the given name matches with the specification
+        of `attr` in this Predicate.
+
+        it is assumed that the `name` is already validated to conform."""
+        pred = getattr(self, attr)
+        if pred is None:
+            return True
+        elif isinstance(pred, str):
+            return (pred == name)
+        elif hasattr(pred, "__contains__"):
+            return (name in pred)
+        elif callable(pred):
+            return pred(name)
+        else:
+            raise RuntimeError(f"unexpected predicate for '{attr}': {pred}")
+
+    def _test_subject_name(self, subject):
+        """returns True if the given subject name matches with the specification
+        in this Predicate."""
+        return self._test_name_default(self, 'subject', subject)
+
+    def _test_session_spec(self, session):
+        """returns True if the given SessionSpec matches with the specification
+        in this Predicate."""
+        pred = self.session
+        if pred is None:
+            return True
+        elif isinstance(pred, _SessionSpec):
+            return pred.test(session)
+        elif callable(pred):
+            return pred(session)
+        else:
+            raise RuntimeError(f"unexpected session specification in a predicate: {pred}")
+
+    def _test_domain_name(self, domain):
+        """returns True if the given domain name matches with the specification
+        in this Predicate."""
+        return self._test_name_default(self, 'domain', domain)
+
+    def _test_datafile_spec(self, file):
+        """returns True if the given FileSpec matches with the specification
+        in this Predicate."""
+        pred = self.file
+        if pred is None:
+            return True
+        elif isinstance(pred, _FileSpec):
+            return pred.test(file)
+        elif callable(pred):
+            return pred(file)
+        else:
+            raise RuntimeError(f"unexpected data-file specification in a predicate: {pred}")
+
+    def iterate(self, level=_DataLevels.FILE):
+        """scans files using this Predicate context.
+        returns a tuple consisting of SINGLE-selected Predicates.
+        """
+        raise NotImplementedError("Predicate.iterate")
+
+    def _iter_subject_directories(self):
+        """scans subject directories using this Predicate context.
+        returns a tuple consisting of single-subject directories."""
+        ret = []
+        for subdir in sorted(self.root.iterdir()):
+            subject = _parsing.subject.match(subdir.name)
+            if subject is None:
+                continue
+            elif self._test_subject_name(subject) == True:
+                ret.append(subdir)
+        return tuple(ret)
+
+    def _iter_session_directories(self):
+        """scans session directories using this Predicate context.
+        returns a tuple consisting of single-session directories."""
+        ret = []
+        for subdir in self._iter_subject_directories():
+            for sessdir in sorted(subdir.iterdir()):
+                session = _parsing.subject.match(sessdir.name)
+                if session is None:
+                    continue
+                elif self._test_session_spec(_SessionSpec(**session)) == True:
+                    ret.append(sessdir)
+        return tuple(ret)
+
+    def _iter_domain_directories(self):
+        """scans domain directories using this Predicate context.
+        returns a tuple consisting of single-domain directories."""
+        ret = []
+        for sessdir in self._iter_session_directories():
+            for domdir in sorted(sessdir.iterdir()):
+                domain = _parsing.domain.match(domdir.name)
+                if domain is None:
+                    continue
+                elif self._test_domain_name(domain) == True:
+                    ret.append(domdir)
+        return tuple(ret)
+
+    def _iter_datafiles(self):
+        """scans individual data file using this Predicate context.
+        returns a tuple consisting of Path objects."""
+        ret = []
+        for domdir in self._iter_domain_directories():
+            sessdir = domdir.parent
+            subdir  = sessdir.parent
+
+            subject = subdir.name
+            session = sessdir.name
+            domain  = domdir.name
+            for path in sorted(domdir.iterdir()):
+                spec = _parsing.file.match(path.name)
+                if spec is None:
+                    continue
+                elif (spec["subject"] != subject) \
+                    or (_SessionSpec(**spec["session"]).name != session) \
+                    or (spec["domain"] != domain):
+                    _warnings.warn(f"incoherent file name found in '{subject}/{session}/{domain}': {path.name}",
+                                    _FormattingWarning)
+                elif self._test_datafile_spec(_FileSpec(**spec["filespec"])) == True:
+                    ret.append(path)
+        return tuple(ret)

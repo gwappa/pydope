@@ -28,7 +28,9 @@ import datetime as _datetime
 from collections import namedtuple as _namedtuple
 
 SEP          = "_"
-ParseResult  = _namedtuple("ParseResult", ("result", "remaining"))
+class ParseResult(_namedtuple("_ParseResult", ("result", "remaining"))):
+    def is_fully_parsed(self):
+        return (self.remaining is None) or (len(self.remaining) == 0)
 
 class ParseError(ValueError):
     def __init__(self, msg):
@@ -84,6 +86,18 @@ class element:
             raise ParseError(f"does not match to the name pattern: {fmt}")
         result = matched.group(0)
         return ParseResult(result, cls.format_remaining(fmt[len(result):]))
+
+    @classmethod
+    def match(cls, fmt):
+        """returns the parse result if matched; otherwise returns None."""
+        try:
+            result = cls.parse(fmt)
+        except ValueError:
+            return None
+        if not result.is_fully_parsed():
+            return None
+        else:
+            return result.result
 
 class dataset(element):
     pass
@@ -205,4 +219,19 @@ class filespec(element):
             chan = cls.channel(chan.remaining)
         res["channel"] = tuple(channels) if len(channels) > 0 else None
         res["suffix"]  = chan.remaining
+        return ParseResult(res, "")
+
+class file(element):
+    @classmethod
+    def parse(cls, fmt):
+        if not isinstance(fmt, str):
+            raise ValueError(f"file name is expected to be a string, but got {fmt.__class__}")
+
+        res = dict()
+        res["subject"],  rem = subject.parse(fmt)
+        res["session"],  rem = session.parse(rem)
+        res["domain"],   rem = domain.parse(rem)
+        res["filespec"], rem = filespec.parse(rem)
+        if (rem is not None) and (len(rem.strip()) > 0):
+            raise ParseError(f"remaining characters ('{rem}') in file name: {fmt}")
         return ParseResult(res, "")

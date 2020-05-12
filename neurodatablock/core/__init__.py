@@ -90,3 +90,6 @@ class DataLevels:
     SESSION = "session"
     DOMAIN  = "domain"
     FILE    = "file"
+
+class FormattingWarning(UserWarning):
+    pass
