@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
 import collections as _collections
 from .. import status as _status
 from .. import parsing as _parsing
@@ -143,7 +144,7 @@ class FileSpec(_collections.namedtuple("_FileSpec",
                         channel=validate_channels(channel))
 
     def compute_write_status(self):
-        status_set = dict((fld, _status.compute_write_status(getattr(self, fld)) \
+        status_set = dict((fld, _status.compute_write_status(getattr(self, fld))) \
                         for fld in ("suffix", "index", "channel"))
         # being NONE or DYNAMIC supercedes everything (in this order)
         for status in (_status.NONE, _status.DYNAMIC):

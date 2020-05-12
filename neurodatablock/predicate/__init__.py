@@ -30,8 +30,6 @@ from .. import modes as _modes
 from .. import levels as _levels
 from .. import status as _status
 from .. import parsing as _parsing
-from ..core import SelectionStatus as _SelectionStatus
-from ..core import DataLevels as _DataLevels
 from ..core import FormattingWarning as _FormattingWarning
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
@@ -332,7 +330,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         elif level == _levels.DOMAIN:
             return tuple(self.with_values(subject=path.parent.parent.name,
                                           session=_SessionSpec(path.parent.name),
-                                          domain=path.name)) \
+                                          domain=path.name) \
                         for path in self._iter_domain_directories())
         elif level == _levels.FILE:
             return tuple(self.with_values(subject=path.parent.parent.parent.name,
