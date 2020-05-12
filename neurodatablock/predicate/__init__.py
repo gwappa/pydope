@@ -116,10 +116,6 @@ class Predicate(_collections.namedtuple("_Predicate",
         return self.file.suffix
 
     @property
-    def path(self):
-        return self.compute_path()
-
-    @property
     def subject_path(self):
         return self.compute_subject_path()
 

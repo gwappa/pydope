@@ -29,55 +29,52 @@ class Container: # TODO: better renamed as `Context`?
     """a reference to data based on a specific Predicate."""
     _spec = None
 
-    @classmethod
-    def is_valid_path(cls, path):
-        """returns if the specified file path
-        represents a valid file for this container type."""
-        raise NotImplementedError(f"not implemented: {cls}.is_valid_path()")
-
-    @classmethod
-    def compute_path(cls, parentpath, key):
-        """computes a path for a container from the parent path and `key`.
-        `key` is typically a string, but may be e.g. SessionSpec."""
-        raise NotImplementedError(f"not implemented: {cls}.compute_child_path()")
-
-    @classmethod
-    def from_parent(cls, parentspec, key):
-        """creates a container from the parent spec and `key`.
-        `key` is typically a string, but may be e.g. SessionSpec."""
-        raise NotImplementedError(f"not implemented: {cls}.from_path()")
+    @staticmethod
+    def newinstance(spec):
+        lev = spec.level
+        if lev == _levels.ROOT:
+            from ..dataset import Dataset
+            return Dataset(spec)
+        elif lev == _levels.SUBJECT:
+            from ..subject import Subject
+            return Subject(spec)
+        elif lev == _levels.SESSION:
+            from ..session import Session
+            return Session(spec)
+        elif lev == _levels.DOMAIN:
+            from ..domain import Domain
+            return Domain(spec)
+        else:
+            from ..datafile import Datafile
+            return Datafile(spec)
 
     def with_mode(self, mode):
         """changes the I/O mode of this container."""
         return self.__class__(self._spec.with_values(mode=mode))
 
 class Selector:
-    """an adaptor class used to select from subdirectories."""
-    def __init__(self, spec, delegate):
-        self._spec     = spec
-        self._path     = spec.path
-        self._delegate = delegate
+    """an adaptor class used to select from child components."""
+    def __init__(self, spec, level):
+        self._spec  = spec
+        self._path  = spec.compute_path()
+        self._level = _levels.validate(level)
 
     def __iter__(self):
         if not self._path.exists():
             raise FileNotFoundError(f"path does not exist: {parent}")
-        return tuple(sorted(self._delegate.from_parent(self._spec, path.name) \
-                            for path in self._path.iterdir() \
-                            if self._delegate.is_valid_path(path)))
+        return self._spec.iterate_at_level(self._level)
+
+    def _compose_child(self, name):
+        values = {self._level: name}
+        return self._spec.with_values(**values)
 
     def __getitem__(self, key):
-        child = self._delegate.compute_path(self._path, key)
+        child = self._compose_child(key)
         if self._spec.mode == _modes.READ:
             if not self._path.exists():
                 raise FileNotFoundError(f"container path does not exist: {parent}")
-            if not child.exists():
+            if not child.compute_path().exists():
                 raise FileNotFoundError(f"item does not exist: {child}")
-        return self._delegate.from_parent(self._spec, key)
-
-    @property
-    def path(self):
-        return self._path
-
         return Container.newinstance(child)
 
 class FormattingWarning(UserWarning):
