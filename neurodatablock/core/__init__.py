@@ -22,10 +22,8 @@
 # SOFTWARE.
 #
 
-import pathlib as _pathlib
-import datetime as _datetime
-
 from .. import modes as _modes
+from .. import levels as _levels
 
 class Container: # TODO: better renamed as `Context`?
     """a reference to data based on a specific Predicate."""
@@ -80,66 +78,7 @@ class Selector:
     def path(self):
         return self._path
 
-class SelectionStatus:
-    NONE        = "none"
-    UNSPECIFIED = "unspecified"
-    SINGLE      = "single"
-    MULTIPLE    = "multiple"
-    DYNAMIC     = "dynamic"
-
-    @staticmethod
-    def compute_write_status(spec):
-        if isinstance(spec, (int, str, bytes, _pathlib.Path, _datetime.datetime)):
-            return SelectionStatus.SINGLE
-        elif spec is None:
-            return SelectionStatus.UNSPECIFIED
-        elif hasattr(spec, "__iter__"):
-            size = len(spec)
-            if size == 1:
-                return SelectionStatus.SINGLE
-            elif size == 0:
-                return SelectionStatus.NONE
-            else:
-                return SelectionStatus.MULTIPLE
-        elif callable(spec):
-            return SelectionStatus.DYNAMIC
-        else:
-            raise ValueError(f"unexpected specification: {spec}")
-
-    @staticmethod
-    def compute_read_status(iterated):
-        size = len(iterated)
-        if size == 0:
-            return _SelectionStatus.NONE
-        elif size == 1:
-            return _SelectionStatus.SINGLE
-        else:
-            return _SelectionStatus.MULTIPLE
-
-    @staticmethod
-    def combine(*stats):
-        if len(stats) == 0:
-            return SelectionStatus.UNSPECIFIED
-        elif len(stats) == 1:
-            return stats[0]
-        else:
-            for status in (SelectionStatus.UNSPECIFIED,
-                           SelectionStatus.NONE,
-                           SelectionStatus.DYNAMIC,
-                           SelectionStatus.MULTIPLE): # must be in this order
-                if status in stats:
-                    return status
-            invalid = tuple(stat for stat in stats if stat != SelectionStatus.SINGLE)
-            if len(invalid) > 0:
-                raise ValueError(f"unexpected status string(s): {invalid}")
-            return SelectionStatus.SINGLE
-
-class DataLevels:
-    ROOT    = "root"
-    SUBJECT = "subject"
-    SESSION = "session"
-    DOMAIN  = "domain"
-    FILE    = "file"
+        return Container.newinstance(child)
 
 class FormattingWarning(UserWarning):
     pass

@@ -27,11 +27,11 @@ import collections as _collections
 import datetime as _datetime
 
 from .. import defaults
-from ..core import SelectionStatus as _SelectionStatus
+from .. import status as _status
 from .. import parsing as _parsing
 
 class SessionSpec(_collections.namedtuple("_SessionSpec",
-                  ("type", "date", "index")), _SelectionStatus):
+                  ("type", "date", "index"))):
 
     def __new__(cls, type=None, date=None, index=None):
         if (date is None) and (index is None):
@@ -80,7 +80,7 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
         return self.__class__(None,None,None)
 
     def compute_write_status(self):
-        return _SelectionStatus.combine(_SelectionStatus.compute_write_status(fld) \
+        return _status.combine(_status.compute_write_status(fld) \
                     for fld in self)
 
     def compute_path(self, context):

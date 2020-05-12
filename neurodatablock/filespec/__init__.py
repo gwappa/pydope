@@ -22,7 +22,7 @@
 # SOFTWARE.
 #
 import collections as _collections
-from ..core import SelectionStatus as _SelectionStatus
+from .. import status as _status
 from .. import parsing as _parsing
 
 def parse_repeated(item, parsefun, separators=(",", "/", "+", "-")):
@@ -104,7 +104,7 @@ def validate_channels(channels):
         return channels
 
 class FileSpec(_collections.namedtuple("_FileSpec",
-                ("suffix", "type", "index", "channel")), _SelectionStatus):
+                ("suffix", "type", "index", "channel"))):
     DIGITS = 5
 
     def __new__(cls, suffix=None, trial=None, run=None, channel=None, type=None, index=None):
@@ -141,20 +141,20 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         return cls(**spec)
 
     def compute_write_status(self):
-        status_set = dict((fld, _SelectionStatus.compute_write_status(getattr(self, fld)) \
+        status_set = dict((fld, _status.compute_write_status(getattr(self, fld)) \
                         for fld in ("suffix", "index", "channel"))
         # being NONE or DYNAMIC supercedes everything (in this order)
-        for status in (self.NONE, self.DYNAMIC):
+        for status in (_status.NONE, _status.DYNAMIC):
             if status in status_set.values():
                 return status
 
         # otherwise: status can be either MULTIPLE, SINGLE or UNSPECIFIED
         # where MULTIPLE is not allowed for suffix or index in a single file
-        if self.MULTIPLE in [status_set[key] for key in ("suffix", "index")]:
-            return self.MULTIPLE
+        if (_status.MULTIPLE in [status_set[key] for key in ("suffix", "index")]):
+            return _status.MULTIPLE
 
         # otherwise every combination can be represented as SINGLE
-        return self.SINGLE
+        return _status.SINGLE
 
 
     def compute_path(self, context):

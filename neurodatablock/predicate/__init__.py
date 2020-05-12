@@ -27,6 +27,8 @@ import pathlib as _pathlib
 import warnings as _warnings
 
 from .. import modes as _modes
+from .. import levels as _levels
+from .. import status as _status
 from .. import parsing as _parsing
 from ..core import SelectionStatus as _SelectionStatus
 from ..core import DataLevels as _DataLevels
@@ -42,8 +44,7 @@ class Predicate(_collections.namedtuple("_Predicate",
                  "subject",
                  "session",
                  "domain",
-                 "file")),
-                _SelectionStatus, _DataLevels):
+                 "file"))):
     """a predicate to search the datasets.
     the base class is also used to represent the specification
     of concrete subjects, sessions etc."""
@@ -57,7 +58,7 @@ class Predicate(_collections.namedtuple("_Predicate",
                 file=None,
                 **specs):
         return super(cls, Predicate).__new__(cls,
-                        _modes.verify(mode),
+                        _modes.validate(mode),
                         _validate.root(root),
                         _validate.item_default(subject, "subject"),
                         _validate.session(session=session, **specs),
@@ -67,16 +68,16 @@ class Predicate(_collections.namedtuple("_Predicate",
     @property
     def level(self):
         """returns a string representation for the 'level' of specification."""
-        if self.file.status != _FileSpec.UNSPECIFIED:
-            return self.FILE
+        if self.file.status != _status.UNSPECIFIED:
+            return _levels.FILE
         elif self.domain is not None:
-            return self.DOMAIN
-        elif self.session.status != _SessionSpec.UNSPECIFIED:
-            return self.SESSION
+            return _levels.DOMAIN
+        elif self.session.status != _status.UNSPECIFIED:
+            return _levels.SESSION
         elif self.subject is not None:
-            return self.SUBJECT
+            return _levels.SUBJECT
         else:
-            return self.ROOT
+            return _levels.ROOT
 
     @property
     def status(self):
@@ -133,22 +134,22 @@ class Predicate(_collections.namedtuple("_Predicate",
     @property
     def subjects(self):
         """scans the dataset for existing subjects as Predicate objects."""
-        return self.iterate_at_level(self.SUBJECT)
+        return self.iterate_at_level(_levels.SUBJECT)
 
     @property
     def sessions(self):
         """scans the dataset for existing sessions as Predicate objects."""
-        return self.iterate_at_level(self.SESSION)
+        return self.iterate_at_level(_levels.SESSION)
 
     @property
     def domains(self):
         """scans the dataset for existing domains as Predicate objects."""
-        return self.iterate_at_level(self.DOMAIN)
+        return self.iterate_at_level(_levels.DOMAIN)
 
     @property
     def files(self):
         """scans the dataset for existing data files as Predicate objects."""
-        return self.iterate_at_level(self.FILE)
+        return self.iterate_at_level(_levels.FILE)
 
     def with_values(self, clear=False, **newvalues):
         """specifying 'clear=True' will fill all values
@@ -170,22 +171,22 @@ class Predicate(_collections.namedtuple("_Predicate",
         return self.__class__(**spec)
 
     def as_dataset(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
+        return self.__class__(mode=self.mode if mode is None else _modes.validate(mode),
                               root=self.root)
 
     def as_subject(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
+        return self.__class__(mode=self.mode if mode is None else _modes.validate(mode),
                               root=self.root,
                               subject=self.subject)
 
     def as_session(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
+        return self.__class__(mode=self.mode if mode is None else _modes.validate(mode),
                               root=self.root,
                               subject=self.subject,
                               session=self.session)
 
     def as_domain(self, mode=None):
-        return self.__class__(mode=self.mode if mode is None else _modes.verify(mode),
+        return self.__class__(mode=self.mode if mode is None else _modes.validate(mode),
                               root=self.root,
                               subject=self.subject,
                               session=session,
@@ -203,19 +204,19 @@ class Predicate(_collections.namedtuple("_Predicate",
             return self.DYNAMIC
 
         lev = self.level
-        if lev == self.ROOT:
-            return _SelectionStatus.SINGLE
+        if lev == _levels.ROOT:
+            return _status.SINGLE
 
-        status = _SelectionStatus.compute_write_status(self.subject)
-        if (lev == self.SUBJECT) or (status != _SelectionStatus.SINGLE):
+        status = _status.compute_write_status(self.subject)
+        if (lev == _levels.SUBJECT) or (status != _status.SINGLE):
             return status
 
         status = self.session.compute_write_status()
-        if (lev == self.SESSION) or (status != _SelectionStatus.SINGLE):
+        if (lev == _levels.SESSION) or (status != _status.SINGLE):
             return status
 
         status = _SelectionStatus.compute_write_status(self.domain)
-        if (lev == self.DOMAIN) or (status != _SelectionStatus.SINGLE):
+        if (lev == _levels.DOMAIN) or (status != _status.SINGLE):
             return status
 
         return self.file.compute_write_status()
@@ -223,16 +224,16 @@ class Predicate(_collections.namedtuple("_Predicate",
     def _read_status(self):
         """uses iterate() functionality to check selection status."""
         lev = self.level
-        if lev == self.ROOT:
-            return self.SINGLE
-        elif lev == self.SUBJECT:
-            return _SelectionStatus.compute_read_status(self.subjects)
-        elif lev == self.SESSION:
-            return _SelectionStatus.compute_read_status(self.sessions)
-        elif lev == self.DOMAIN:
-            return _SelectionStatus.compute_read_status(self.domains)
-        elif lev == self.FILE:
-            return _SelectionStatus.compute_read_status(self.files)
+        if lev == _levels.ROOT:
+            return _status.SINGLE
+        elif lev == _levels.SUBJECT:
+            return _status.compute_read_status(self.subjects)
+        elif lev == _levels.SESSION:
+            return _status.compute_read_status(self.sessions)
+        elif lev == _levels.DOMAIN:
+            return _status.compute_read_status(self.domains)
+        elif lev == _levels.FILE:
+            return _status.compute_read_status(self.files)
 
     def compute_path(self):
         """returns a simulated path object if and only if this Predicate
@@ -245,16 +246,16 @@ class Predicate(_collections.namedtuple("_Predicate",
         """
         level  = self.level
         status = self.status
-        if status != self.SINGLE:
+        if status != _status.SINGLE:
             raise ValueError(f"cannot compute a path: not specifying a single condition (status: '{status}')")
 
-        if level == self.ROOT:
+        if level == _levels.ROOT:
             return self.root
-        elif level == self.SUBJECT:
+        elif level == _levels.SUBJECT:
             return self.compute_subject_path()
-        elif level == self.SESSION:
+        elif level == _levels.SESSION:
             return self.session.compute_path(self)
-        elif level == self.DOMAIN:
+        elif level == _levels.DOMAIN:
             return self.compute_domain_path()
         else:
             # status == FILE
@@ -323,21 +324,21 @@ class Predicate(_collections.namedtuple("_Predicate",
         """scans files using this Predicate context.
         returns a tuple consisting of SINGLE-selected Predicates.
         """
-        if level == _DataLevels.ROOT:
+        if level == _levels.ROOT:
             return (self,)
-        elif level == _DataLevels.SUBJECT:
+        elif level == _levels.SUBJECT:
             return tuple(self.with_values(subject=path.name) \
                     for path in self._iter_subject_directories())
-        elif level == _DataLevels.SESSION:
+        elif level == _levels.SESSION:
             return tuple(self.with_values(subject=path.parent.name,
                                           session=_SessionSpec(path.name)) \
                         for path in self._iter_session_directories())
-        elif level == _DataLevels.DOMAIN:
+        elif level == _levels.DOMAIN:
             return tuple(self.with_values(subject=path.parent.parent.name,
                                           session=_SessionSpec(path.parent.name),
                                           domain=path.name)) \
                         for path in self._iter_domain_directories())
-        elif level == _DataLevels.FILE:
+        elif level == _levels.FILE:
             return tuple(self.with_values(subject=path.parent.parent.parent.name,
                                           session=_SessionSpec(path.parent.parent.name),
                                           domain=path.parent.name,

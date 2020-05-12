@@ -22,18 +22,15 @@
 # SOFTWARE.
 #
 
-READ   = "r" # reads existing datasets
-WRITE  = "w" # updates datasets; modifies if they exist; creates them otherwise
-APPEND = "a" # appends to existing datasets; raises error in case it attempts to modify existing
+ROOT    = "root"
+SUBJECT = "subject"
+SESSION = "session"
+DOMAIN  = "domain"
+FILE    = "file"
 
-DEFAULT = READ
-
-def validate(mode):
-    if mode is None:
-        return DEFAULT
-    if not isinstance(mode, str):
-        raise ValueError(f"a string value expceted for I/O mode (got {mode.__class__})")
-    mode = mode.lower()
-    if mode not in (READ, WRITE, APPEND):
-        raise ValueError(f"unknown I/O mode: '{mode}'")
-    return mode
+def validate(level, include_root=False):
+    if (include_root == True) and (level == ROOT):
+        return level
+    if level not in (SUBJECT, SESSION, DOMAIN, FILE):
+        raise ValueError(f"unexpected data level: '{level}'")
+    return level
