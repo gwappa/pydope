@@ -32,18 +32,18 @@ class DatasetTests(unittest.TestCase):
 
     def test_initialize(self):
         for mod in (modes.WRITE, modes.APPEND):
-            root = DataRoot(self._root, mode=mod) # should success
-        self.assertEqual(root.path, self._root)
+            root = Dataset(self._root, mode=mod) # should success
+        self.assertEqual(root._path, self._root)
 
         with self.assertRaises(FileNotFoundError):
-            DataRoot(self._root, mode=modes.READ)
+            Dataset(self._root, mode=modes.READ)
 
         self._root.mkdir()
         Dataset(self._root) # should success
         self._root.rmdir()
 
         with self.assertRaises(FileNotFoundError):
-            DataRoot(self._root)
+            Dataset(self._root)
 
     def tearDown(self):
         if self._root.exists():

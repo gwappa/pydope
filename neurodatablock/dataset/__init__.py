@@ -25,6 +25,7 @@
 import pathlib as _pathlib
 
 from .. import modes as _modes
+from .. import levels as _levels
 from ..predicate import Predicate as _Predicate
 from ..core import Container as _Container
 from ..core import Selector as _Selector
