@@ -69,6 +69,13 @@ class element:
     NAME_PATTERN = _re.compile(r"[a-zA-Z0-9-]+")
 
     @classmethod
+    def block_repository_related(cls, fmt):
+        if isinstance(fmt, str):
+            for blocked in ("LICENSE", "README"):
+                if fmt.lower().strip().startswith(blocked.lower()):
+                    raise ParseError(f"subject name shall not start with '{blocked}'")
+
+    @classmethod
     def format_remaining(cls, remaining, sep=SEP):
         if len(remaining) == 0:
             return None
@@ -79,6 +86,7 @@ class element:
     @classmethod
     def parse(cls, fmt):
         """default parsing behavior"""
+        cls.block_repository_related(fmt)
         if not isinstance(fmt, str):
             raise ValueError(f"names are expected to be a string, but got {fmt.__class__}")
         matched = cls.NAME_PATTERN.match(fmt)
@@ -112,6 +120,7 @@ class session(element):
 
     @classmethod
     def parse(cls, fmt):
+        cls.block_repository_related(fmt)
         if not isinstance(fmt, str):
             raise ValueError(f"session name expected to be a string, but got {fmt.__class__}")
         matched = cls.NAME_PATTERN.match(fmt)
@@ -208,6 +217,7 @@ class filespec(element):
     @classmethod
     def parse(cls, fmt):
         """default parsing behavior"""
+        cls.block_repository_related(fmt)
         if not isinstance(fmt, str):
             raise ValueError(f"names are expected to be a string, but got {fmt.__class__}")
 
@@ -236,6 +246,7 @@ class filespec(element):
 class file(element):
     @classmethod
     def parse(cls, fmt):
+        cls.block_repository_related(fmt)
         if not isinstance(fmt, str):
             raise ValueError(f"file name is expected to be a string, but got {fmt.__class__}")
 
