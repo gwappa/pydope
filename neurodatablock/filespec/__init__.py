@@ -134,7 +134,10 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             if (trial is not None) and (run is not None):
                 raise ValueError("trial and run cannot be specified at the same time")
             elif trial is None:
-                blocktype = "run"
+                if run is None:
+                    blocktype = None
+                else:
+                    blocktype = "run"
                 index    = validate_index(run, "run index")
             else:
                 blocktype = "trial"
@@ -160,11 +163,7 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         if (_status.MULTIPLE in [status_set[key] for key in ("suffix", "index")]):
             return _status.MULTIPLE
 
-        # otherwise every combination can be represented as SINGLE
-        # (cf. being UNSPECIFIED for index/channel/suffix does not mean
-        #      the file path cannot be determined)
-        return _status.SINGLE
-
+        return _status.SINGLE if (self.blocktype is not None) else _status.UNSPECIFIED
 
     def compute_path(self, context):
         """context: Predicate"""
@@ -208,15 +207,18 @@ class FileSpec(_collections.namedtuple("_FileSpec",
 
     def with_values(self, **kwargs):
         spec = {}
-        if "blocktype" in kwargs.keys():
-            blocktype = kwargs["blocktype"]
-            if blocktype not in ("run", "trial"):
-                raise ValueError(f"'run' or 'trial' may be used for 'blocktype' (got '{blocktype}')")
-            spec[blocktype] = kwargs.get("index", self.index)
-        else:
-            for key in ("run", "trial"):
-                if key in kwargs.keys():
-                    spec[key] = kwargs[key]
+        for blocktype in ("run", "trial"):
+            if blocktype in kwargs.keys():
+                for key in ("blocktype", "index"):
+                    if key in kwargs.keys():
+                        raise ValueError(f"cannot specify '{key}' when '{blocktype}' is already set")
+                if "blocktype" in spec.keys():
+                    raise ValueError(f"cannot specify 'run' and 'trial' at the same time")
+                spec["blocktype"] = blocktype
+                spec["index"]     = kwargs[blocktype]
+        if "blocktype" not in spec.keys():
+            spec["blocktype"] = kwargs.get("blocktype", self.blocktype)
+            spec["index"]     = kwargs.get("index", self.index)
         for fld in ("suffix", "channel"):
             spec[fld] = kwargs.get(fld, getattr(self, fld))
         return self.__class__(**spec)

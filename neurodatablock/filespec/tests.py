@@ -30,9 +30,9 @@ from .. import status as _status
 
 class FileSpecTests(unittest.TestCase):
     def test_status(self):
-        obj = FileSpec(trial=None, run=1, channel="V", suffix=".npy")
+        obj = FileSpec(run=1, channel="V", suffix=".npy")
         self.assertEqual(obj.compute_write_status(), _status.SINGLE)
-        obj = obj.with_values(trial=1, run=None)
+        obj = obj.with_values(trial=1)
         self.assertEqual(obj.compute_write_status(), _status.SINGLE)
         self.assertEqual(obj.index, 1)
         self.assertEqual(obj.blocktype, "trial")
@@ -41,7 +41,4 @@ class FileSpecTests(unittest.TestCase):
         obj = obj.with_values(trial=(1,3,5))
         self.assertEqual(obj.compute_write_status(), _status.MULTIPLE)
         obj = FileSpec()
-        # TODO: shall the empty FileSpec has UNSPECIFIED write-status?
-        # (currently it is evaluated as SINGLE, because empty block-type
-        # implies a 'run')
-        self.assertEqual(obj.compute_write_status(), _status.SINGLE)
+        self.assertEqual(obj.compute_write_status(), _status.UNSPECIFIED)
