@@ -157,9 +157,9 @@ class Predicate(_collections.namedtuple("_Predicate",
                 default = None
 
             if fld == "session":
-                spec[fld] = _parse.session(**newvalues, default=default)
+                spec[fld] = _validate.session(**newvalues, default=default)
             elif fld == "file":
-                spec[fld] = _parse.file(**newvalues, default=default)
+                spec[fld] = _validate.file(**newvalues, default=default)
             else:
                 spec[fld] = newvalues.get(fld, default)
         return self.__class__(**spec)
