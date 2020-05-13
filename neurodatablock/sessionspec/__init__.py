@@ -103,9 +103,10 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
         return self.name
 
     def test(self, spec):
-        """returns if another SessionSpec object
+        """returns if another (SINGLE-specified) SessionSpec object
         matches the specification of this object."""
-        raise NotImplementedError("SessionSpec.test()")
+        return all(_status.test(getattr(self, attr), getattr(spec, attr)) \
+                   for attr in self._fields)
 
     @property
     def name(self):

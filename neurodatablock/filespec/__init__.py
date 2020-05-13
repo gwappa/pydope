@@ -114,11 +114,11 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             try:
                 parsed    = _pathlib.Path(suffix)
                 spec, _   = _parsing.file.parse(parsed.name)
-                suffix    = spec["suffix"]
-                blocktype = spec["blocktype"]
-                index     = spec["index"]
-                channel   = spec["channel"]
-            except: # any type of error
+                suffix    = spec["filespec"]["suffix"]
+                blocktype = spec["filespec"]["blocktype"]
+                index     = spec["filespec"]["index"]
+                channel   = spec["filespec"]["channel"]
+            except ValueError:
                 pass
         if blocktype is not None:
             # use type/index mode
@@ -149,6 +149,12 @@ class FileSpec(_collections.namedtuple("_FileSpec",
                         blocktype=blocktype,
                         index=index,
                         channel=validate_channels(channel))
+
+    def test(self, spec):
+        """returns if another (SINGLE-specified) SessionSpec object
+        matches the specification of this object."""
+        return all(_status.test(getattr(self, attr), getattr(spec, attr)) \
+                   for attr in self._fields)
 
     def compute_write_status(self):
         status_set = dict((fld, _status.compute_write_status(getattr(self, fld))) \

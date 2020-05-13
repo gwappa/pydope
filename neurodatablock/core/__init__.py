@@ -52,6 +52,12 @@ class Container: # TODO: better renamed as `Context`?
     def root(self):
         return self._spec.root
 
+    def in_tuple(self, out):
+        if out is None:
+            return tuple()
+        else:
+            return tuple(out)
+
     def with_mode(self, mode):
         """changes the I/O mode of this container."""
         return self.__class__(self._spec, mode=mode)

@@ -213,7 +213,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         if (lev == _levels.SESSION) or (status != _status.SINGLE):
             return status
 
-        status = _SelectionStatus.compute_write_status(self.domain)
+        status = _status.compute_write_status(self.domain)
         if (lev == _levels.DOMAIN) or (status != _status.SINGLE):
             return status
 
@@ -303,7 +303,7 @@ class Predicate(_collections.namedtuple("_Predicate",
     def _test_domain_name(self, domain):
         """returns True if the given domain name matches with the specification
         in this Predicate."""
-        return self._test_name_default(self, 'domain', domain)
+        return self._test_name_default('domain', domain)
 
     def _test_datafile_spec(self, file):
         """returns True if the given FileSpec matches with the specification
@@ -340,7 +340,8 @@ class Predicate(_collections.namedtuple("_Predicate",
             return tuple(self.with_values(subject=path.parent.parent.parent.name,
                                           session=_SessionSpec(path.parent.parent.name),
                                           domain=path.parent.name,
-                                          file=_FileSpec(path)))
+                                          file=_FileSpec(path)) \
+                         for path in self._iter_datafiles())
         else:
             raise ValueError(f"unknown data level to iterate: '{level}'")
 
@@ -362,7 +363,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         ret = []
         for subdir in self._iter_subject_directories():
             for sessdir in sorted(subdir.iterdir()):
-                session = _parsing.subject.match(sessdir.name)
+                session = _parsing.session.match(sessdir.name)
                 if session is None:
                     continue
                 elif self._test_session_spec(_SessionSpec(**session)) == True:

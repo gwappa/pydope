@@ -48,29 +48,6 @@ class DatasetTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             Dataset(self._root)
 
-    def test_subjects(self):
-        self._root.mkdir()
-        data = Dataset(self._root)
-        subs = data.subjects
-        assert isinstance(subs, Selector)
-        self.assertEqual(len(subs), 0)
-
-        for ani in ("A1", "A2"):
-            path = self._root / ani
-            path.mkdir()
-        subs = data.subjects
-        self.assertEqual(len(subs), 2)
-        assert isinstance(subs["A1"], Subject)
-        assert isinstance(subs["A2"], Subject)
-        with self.assertRaises(PredicateError):
-            subs["A3"]
-        data = data.with_mode(modes.WRITE)
-        self.assertEqual(data._spec.mode, modes.WRITE)
-        subs = data.subjects
-        self.assertEqual(subs._spec.mode, modes.WRITE)
-        data["A3"] # should success
-        testing.remove_recursive(self._root)
-
     def tearDown(self):
         if self._root.exists():
             testing.remove_recursive(self._root)

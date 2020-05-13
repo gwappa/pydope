@@ -66,17 +66,17 @@ class Dataset(_Container):
     @property
     def sessions(self):
         from ..session import Session
-        return tuple(Session(spec) for spec in self._spec.sessions)
+        return self.in_tuple(Session(spec) for spec in self._spec.sessions)
 
     @property
     def domains(self):
         from ..domain import Domain
-        return tuple(Domain(spec) for spec in self._spec.domains)
+        return self.in_tuple(Domain(spec) for spec in self._spec.domains)
 
     @property
     def files(self):
         from ..datafile import DataFile
-        return tuple(DataFile(spec) for spec in self._spec.files)
+        return self.in_tuple(DataFile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
         return self.subjects[key]

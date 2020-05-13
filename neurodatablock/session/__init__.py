@@ -99,7 +99,7 @@ class Session(_Container):
         return Dataset(self._spec.as_dataset())
 
     @property
-    def subject(path):
+    def subject(self):
         from ..subject import Subject
         return Subject(self._spec.as_subject())
 
@@ -111,7 +111,7 @@ class Session(_Container):
     @property
     def files(self):
         from ..datafile import DataFile
-        return tuple(DataFile(spec) for spec in self._spec.files)
+        return self.in_tuple(DataFile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
         """`key` must be  a string."""

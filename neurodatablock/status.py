@@ -34,6 +34,16 @@ MULTIPLE    = "multiple"
 DYNAMIC     = "dynamic"
 
 def compute_write_status(spec):
+    """returns selection status for writing.
+
+    - None: UNSPECIFIED
+    - single specific value (str, int...): SINGLE
+    - iterable (list, tuple, except str):
+        > size 0: NONE
+        > size 1: SINGLE
+        > size >1: MULTIPLE
+    - callable: DYNAMIC
+    """
     if isinstance(spec, (int, str, bytes, _pathlib.Path, _datetime.datetime)):
         return SINGLE
     elif spec is None:
@@ -76,3 +86,23 @@ def combine(*stats):
         if len(invalid) > 0:
             raise ValueError(f"unexpected status string(s): {invalid}")
         return SINGLE
+
+def test(ref, tested):
+    """ref: reference specs, tested: a specific SINGLE-spec"""
+    status = compute_write_status(ref)
+    if status == NONE:
+        return False
+    elif status == UNSPECIFIED:
+        return True
+    elif status == SINGLE:
+        if isinstance(ref, (str, int, bytes, _pathlib.Path)):
+            return (ref == tested)
+        else:
+            return all(test(getattr(ref, attr), getattr(tested, attr)) \
+                       for attr in ("year", "month", "day"))
+    elif status == MULTIPLE:
+        return any(test(item, tested) for item in ref)
+    elif status == DYNAMIC:
+        return ref(tested)
+    else:
+        raise RuntimeError(f"unexpected selection status: '{status}'")

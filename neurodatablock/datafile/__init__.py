@@ -66,7 +66,7 @@ class DataFile(_Container):
             raise ValueError(f"cannot specify a data file from the predicate level: '{level}'")
 
         self._spec = spec
-        self._path = spec.path
+        self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"data file does not exist: {self._path}")
 
@@ -76,19 +76,19 @@ class DataFile(_Container):
 
     @property
     def trial(self):
-        if self._spec.file.type != "trial":
+        if self._spec.file.blocktype != "trial":
             raise ValueError("this datafile is not specified as trial-related")
         return self._spec.file.index
 
     @property
     def run(self):
-        if self._spec.file.type != "run":
+        if self._spec.file.blocktype != "run":
             raise ValueError("this datafile is not specified in terms of runs")
         return self._spec.file.index
 
     @property
-    def run_type(self):
-        return self._spec.file.type
+    def blocktype(self):
+        return self._spec.file.blocktype
 
     @property
     def index(self):
