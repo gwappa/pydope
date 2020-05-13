@@ -65,16 +65,18 @@ class Selector:
         self._container = container
 
     def __len__(self):
-        return len(self.__iter__())
+        if not self._path.exists():
+            raise FileNotFoundError(f"path does not exist: {parent}")
+        return len(self._spec.iterate_at_level(self._level))
 
     def __iter__(self):
         if not self._path.exists():
             raise FileNotFoundError(f"path does not exist: {parent}")
         specs = self._spec.iterate_at_level(self._level)
         if self._container is not None:
-            return tuple(self._container(spec) for spec in specs)
+            return (self._container(spec) for spec in specs)
         else:
-            return tuple(Container.newinstance(spec) for spec in specs)
+            return (Container.newinstance(spec) for spec in specs)
 
     def _compose_child(self, name):
         values = {self._level: name}
