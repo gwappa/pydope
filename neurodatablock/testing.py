@@ -31,3 +31,11 @@ def test_dataset_path():
     if root.exists():
         raise FileExistsError("cannot prepare a test dataset")
     return root
+
+def remove_recursive(path):
+    if path.is_dir():
+        for child in path.iterdir():
+            remove_recursive(child)
+        path.rmdir()
+    else:
+        path.unlink()

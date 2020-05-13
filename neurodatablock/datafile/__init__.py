@@ -50,7 +50,9 @@ def validate(spec, mode=None):
                           session=_SessionSpec(sessdir.name),
                           domain=domdir.name,
                           file=_FileSpec(path.name))
-    return spec.with_values(mode=_modes.validate(mode))
+    if mode is not None:
+        spec = spec.with_values(mode=_mode.validate(mode))
+    return spec
 
 class DataFile(_Container):
     """a container class representing a data file."""

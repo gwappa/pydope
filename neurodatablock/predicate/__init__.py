@@ -36,6 +36,10 @@ from ..filespec import FileSpec as _FileSpec
 
 from . import validate as _validate
 
+class PredicateError(ValueError):
+    def __init__(self, msg):
+        super().__init__(msg)
+
 class Predicate(_collections.namedtuple("_Predicate",
                 ("mode",
                  "root",
@@ -241,7 +245,7 @@ class Predicate(_collections.namedtuple("_Predicate",
         level  = self.level
         status = self.status
         if status != _status.SINGLE:
-            raise ValueError(f"cannot compute a path: not specifying a single condition (status: '{status}')")
+            raise PredicateError(f"cannot compute a path: not specifying a single condition (mode: '{self.mode}', status: '{status}')")
 
         if level == _levels.ROOT:
             return self.root
@@ -281,7 +285,7 @@ class Predicate(_collections.namedtuple("_Predicate",
     def _test_subject_name(self, subject):
         """returns True if the given subject name matches with the specification
         in this Predicate."""
-        return self._test_name_default(self, 'subject', subject)
+        return self._test_name_default('subject', subject)
 
     def _test_session_spec(self, session):
         """returns True if the given SessionSpec matches with the specification

@@ -54,7 +54,7 @@ class Container: # TODO: better renamed as `Context`?
 
     def with_mode(self, mode):
         """changes the I/O mode of this container."""
-        return self.__class__(self._spec.with_values(mode=mode))
+        return self.__class__(self._spec, mode=mode)
 
 class Selector:
     """an adaptor class used to select from child components."""
@@ -63,6 +63,9 @@ class Selector:
         self._path  = spec.compute_path()
         self._level = _levels.validate(level)
         self._container = container
+
+    def __len__(self):
+        return len(self.__iter__())
 
     def __iter__(self):
         if not self._path.exists():

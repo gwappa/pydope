@@ -48,7 +48,9 @@ def validate(spec, mode=None):
                           dataset=dsdir.name,
                           subject=subdir.name,
                           sessionspec=_SessionSpec(path.name))
-    return spec.with_values(mode=_modes.validate(mode))
+    if mode is not None:
+        spec = spec.with_values(mode=_modes.validate(mode))
+    return spec
 
 class Session(_Container):
     """a container class representing a session directory."""

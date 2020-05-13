@@ -48,7 +48,9 @@ def validate(spec, mode=None):
                           subject=subdir.name,
                           sessionspec=_SessionSpec(sessdir.name),
                           domain=path.name)
-    return spec.with_values(mode=_modes.validate(mode))
+    if mode is not None:
+        spec = spec.with_values(mode=_modes.validate(mode))
+    return spec
 
 class Domain(_Container):
     """a container class representing a domain directory."""

@@ -41,12 +41,14 @@ def validate(spec, mode=None):
             except TypeError:
                 raise ValueError(f"Dataset can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
         spec = _Predicate(root=root)
-    return spec.with_values(mode=_modes.validate(mode))
+    if mode is not None:
+        spec = spec.with_values(mode=_modes.validate(mode))
+    return spec
 
 class Dataset(_Container):
     """a container class representing the dataset root directory."""
 
-    def __init__(self, spec, mode=_modes.READ):
+    def __init__(self, spec, mode=None):
         """spec: pathlike or Predicate"""
         self._spec = validate(spec, mode=mode)
         if (self._spec.mode == _modes.READ) and (not self._spec.root.exists()):

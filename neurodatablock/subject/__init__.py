@@ -42,7 +42,9 @@ def validate(spec, mode=None):
         spec = _Predicate(root=path.parent.parent,
                           dataset=path.parent.name,
                           subject=path.name)
-    return spec.with_values(mode=_modes.validate(mode))
+    if mode is not None:
+      spec = spec.with_values(mode=_modes.validate(mode))
+    return spec
 
 class Subject(_Container):
     """a container class representing a subject directory."""
@@ -52,7 +54,7 @@ class Subject(_Container):
         by default, dope.modes.READ is selected for `mode`."""
         spec = validate(spec, mode=mode)
         level = spec.level
-        if level in (_levels.DATASET,):
+        if level in (_levels.ROOT,):
             raise ValueError(f"cannot specify a subject from the predicate level: '{level}'")
         elif level != _levels.SUBJECT:
             spec = _Predicate(mode=spec.mode,
