@@ -86,8 +86,8 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(ps.remaining, spec)
         ps = ps.filespec
         self.assertEqual(ps.result["filespec"]["suffix"], ".tif")
-        self.assertEqual(ps.result["filespec"]["trial"],  None)
-        self.assertEqual(ps.result["filespec"]["run"],    run)
+        self.assertEqual(ps.result["filespec"]["type"],  "run")
+        self.assertEqual(ps.result["filespec"]["index"],    run)
         self.assertEqual(set(ps.result["filespec"]["channel"]), set(chans))
 
 if __name__ == "__main__":
