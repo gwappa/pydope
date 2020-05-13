@@ -26,14 +26,22 @@
 
 import unittest
 from . import *
+from .. import status as _status
 
 class FileSpecTests(unittest.TestCase):
     def test_status(self):
         obj = FileSpec(trial=None, run=1, channel="V", suffix=".npy")
-        self.assertEqual(obj.status, obj.SINGLE)
+        self.assertEqual(obj.compute_write_status(), _status.SINGLE)
         obj = obj.with_values(trial=1, run=None)
-        self.assertEqual(obj.status, obj.SINGLE)
+        self.assertEqual(obj.compute_write_status(), _status.SINGLE)
+        self.assertEqual(obj.index, 1)
+        self.assertEqual(obj.blocktype, "trial")
         obj = obj.with_values(trial=None)
-        self.assertEqual(obj.status, obj.MULTIPLE)
+        self.assertEqual(obj.compute_write_status(), _status.SINGLE)
+        obj = obj.with_values(trial=(1,3,5))
+        self.assertEqual(obj.compute_write_status(), _status.MULTIPLE)
         obj = FileSpec()
-        self.assertEqual(obj.status, obj.UNSPECIFIED)
+        # TODO: shall the empty FileSpec has UNSPECIFIED write-status?
+        # (currently it is evaluated as SINGLE, because empty block-type
+        # implies a 'run')
+        self.assertEqual(obj.compute_write_status(), _status.SINGLE)

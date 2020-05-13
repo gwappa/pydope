@@ -215,14 +215,14 @@ class filespec(element):
         for key in cls.KEYS:
             try:
                 result = cls.keyed_index(fmt, key=key)
-                res["type"]  = key
-                res["index"] = result.result
+                res["blocktype"]  = key
+                res["index"]      = result.result
                 fmt    = result.remaining
             except ParseError:
                 pass
-        if "type" not in res.keys():
-            res["type"]  = None
-            res["index"] = None
+        if "blocktype" not in res.keys():
+            res["blocktype"]  = None
+            res["index"]      = None
 
         channels = []
         chan     = cls.channel(fmt)

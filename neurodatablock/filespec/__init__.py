@@ -22,6 +22,8 @@
 # SOFTWARE.
 #
 
+import pathlib as _pathlib
+
 import collections as _collections
 from .. import status as _status
 from .. import parsing as _parsing
@@ -106,40 +108,42 @@ def validate_channels(channels):
         return channels
 
 class FileSpec(_collections.namedtuple("_FileSpec",
-                ("suffix", "type", "index", "channel"))):
-    def __new__(cls, suffix=None, trial=None, run=None, channel=None, type=None, index=None):
-        try:
-            spec, _ = _parsing.file.parse(suffix.name)
-            suffix  = spec["suffix"]
-            type    = spec["type"]
-            index   = spec["index"]
-            channel = spec["channel"]
-        except: # any type of error
-            pass
-        if type is not None:
+                ("suffix", "blocktype", "index", "channel"))):
+    def __new__(cls, suffix=None, trial=None, run=None, channel=None, blocktype=None, index=None):
+        if isinstance(suffix, (str, bytes, _pathlib.Path)):
+            try:
+                parsed    = _pathlib.Path(suffix)
+                spec, _   = _parsing.file.parse(parsed.name)
+                suffix    = spec["suffix"]
+                blocktype = spec["blocktype"]
+                index     = spec["index"]
+                channel   = spec["channel"]
+            except: # any type of error
+                pass
+        if blocktype is not None:
             # use type/index mode
             if trial is not None:
-                raise ValueError("cannot specify 'trial' when 'type' is specified")
+                raise ValueError("cannot specify 'trial' when 'blocktype' is specified")
             elif run is not None:
-                raise ValueError("cannot specify 'run' when 'type' is specified")
-            if type not in ("trial", "run"):
-                raise ValueError(f"string ('trial' or 'run') was expected for 'type', but got '{type}'")
-            index = validate_index(index, f"{type} index")
+                raise ValueError("cannot specify 'run' when 'blocktype' is specified")
+            if blocktype not in ("trial", "run"):
+                raise ValueError(f"string ('trial' or 'run') was expected for 'blocktype', but got '{blocktype}'")
+            index = validate_index(index, f"{blocktype} index")
         else:
             # trial/run mode
             if (trial is not None) and (run is not None):
                 raise ValueError("trial and run cannot be specified at the same time")
             elif trial is None:
-                typ = "run"
-                index = validate_index(run, "run index")
+                blocktype = "run"
+                index    = validate_index(run, "run index")
             else:
-                typ = "trial"
-                index = validate_index(trial, "trial index")
-        if (type is None) and (index is not None):
-            raise ValueError("cannot specify index when 'type' is not specified")
+                blocktype = "trial"
+                index    = validate_index(trial, "trial index")
+        if (blocktype is None) and (index is not None):
+            raise ValueError("cannot specify index when 'blocktype' is not specified")
         return super(cls, FileSpec).__new__(cls,
                         suffix=validate_suffix(suffix),
-                        type=type,
+                        blocktype=blocktype,
                         index=index,
                         channel=validate_channels(channel))
 
@@ -157,6 +161,8 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             return _status.MULTIPLE
 
         # otherwise every combination can be represented as SINGLE
+        # (cf. being UNSPECIFIED for index/channel/suffix does not mean
+        #      the file path cannot be determined)
         return _status.SINGLE
 
 
@@ -172,15 +178,15 @@ class FileSpec(_collections.namedtuple("_FileSpec",
         return f"{context.subject}_{context.session.name}_{context.domain}{runtxt}{chtxt}{sxtxt}"
 
     def format_run(self, digits=None):
-        if self.type is None:
+        if self.blocktype is None:
             return ""
         elif isinstance(self.index, int):
             if digits is None:
                 digits = _defaults["run.index.width"]
-            return f"_{self.type}{str(self.index).zfill(digits)}"
+            return f"_{self.blocktype}{str(self.index).zfill(digits)}"
         else:
             # type is not None, index is None
-            return f"_all{self.type}s"
+            return f"_all{self.blockindex}s"
 
     def format_channel(self, context):
         if self.channel is None:
@@ -202,8 +208,11 @@ class FileSpec(_collections.namedtuple("_FileSpec",
 
     def with_values(self, **kwargs):
         spec = {}
-        if "type" in kwargs.keys():
-            spec[kwargs["type"]] = kwargs.get("index", self.index)
+        if "blocktype" in kwargs.keys():
+            blocktype = kwargs["blocktype"]
+            if blocktype not in ("run", "trial"):
+                raise ValueError(f"'run' or 'trial' may be used for 'blocktype' (got '{blocktype}')")
+            spec[blocktype] = kwargs.get("index", self.index)
         else:
             for key in ("run", "trial"):
                 if key in kwargs.keys():
