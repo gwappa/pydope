@@ -30,6 +30,49 @@ from .. import defaults as _defaults
 from .. import status as _status
 from .. import parsing as _parsing
 
+def validate_type(type):
+    if type is None:
+        return None
+    elif isinstance(type, str):
+        return _parsing.session.type(type)
+    elif hasattr(type, "__iter__"):
+        return tuple(validate_type(t) for t in type)
+    elif callable(type):
+        return type
+    else:
+        raise ValueError(f"unexpected type for session-type specification: {type.__class__}")
+
+def validate_date(date):
+    if date is None:
+        return None
+    elif isinstance(date, _datetime.datetime):
+        return date
+    elif isinstance(date, str):
+        return _parsing.session.date(date)
+    elif hasattr(date, "__iter__"):
+        return tuple(validate_date(d) for d in date)
+    elif all(hasattr(date, attr) for attr in ("keys", "values", "items")):
+        if all((key in date.keys()) for key in ("year", "month", "day")):
+            return _datetime.datetime(year=date["year"],
+                                      month=date["month"],
+                                      day=date["day"])
+    else:
+        raise ValueError(f"unexpected type for session-date specification: {date.__class__}")
+
+def validate_index(index):
+    if index is None:
+        return None
+    elif isinstance(index, int):
+        return index
+    elif isinstance(index, (str, bytes)):
+        return _parsing.session.index(index)
+    elif hasattr(index, "__iter__"):
+        return tuple(validate_index(i) for i in index)
+    elif callable(index):
+        return index
+    else:
+        raise ValueError(f"unexpected type for session-index specification: {index.__class__}")
+
 class SessionSpec(_collections.namedtuple("_SessionSpec",
                   ("type", "date", "index"))):
 
@@ -43,9 +86,9 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
                     return cls(**_parsing.session.name(type))
                 except ValueError:
                     pass # fallthrough
-        return super(cls, SessionSpec).__new__(cls, type=_parsing.session.type(type),
-                                  date=_parsing.session.date(date),
-                                  index=_parsing.session.index(index))
+        return super(cls, SessionSpec).__new__(cls, type=validate_type(type),
+                                  date=validate_date(date),
+                                  index=validate_index(index))
 
     @classmethod
     def empty(cls):
@@ -80,8 +123,8 @@ class SessionSpec(_collections.namedtuple("_SessionSpec",
         return self.__class__(None,None,None)
 
     def compute_write_status(self):
-        return _status.combine(_status.compute_write_status(fld) \
-                    for fld in self)
+        return _status.combine(*[_status.compute_write_status(fld) \
+                    for fld in self])
 
     def compute_path(self, context):
         """context: Predicate"""

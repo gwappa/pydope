@@ -26,6 +26,7 @@
 
 import unittest
 from . import *
+from .. import status as _status
 
 class SessionSpecTests(unittest.TestCase):
 
@@ -43,11 +44,13 @@ class SessionSpecTests(unittest.TestCase):
 
     def test_status(self):
         obj = SessionSpec(type="session", date="2015-12-31", index=1)
-        self.assertEqual(obj.status, obj.SINGLE)
+        self.assertEqual(obj.compute_write_status(), _status.SINGLE)
+        obj = obj.with_values(index=(1,3))
+        self.assertEqual(obj.compute_write_status(), _status.MULTIPLE)
         obj = obj.with_values(index=None)
-        self.assertEqual(obj.status, obj.MULTIPLE)
-        obj = obj.cleared()
-        self.assertEqual(obj.status, obj.UNSPECIFIED)
+        self.assertEqual(obj.compute_write_status(), _status.UNSPECIFIED)
+        obj = SessionSpec()
+        self.assertEqual(obj.compute_write_status(), _status.UNSPECIFIED)
 
 if __name__ == "__main__":
     unittest.main()
