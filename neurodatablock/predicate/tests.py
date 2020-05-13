@@ -26,6 +26,7 @@
 
 import unittest
 from . import *
+from .. import levels
 
 class PredicateTests(unittest.TestCase):
     def test_sessionspec(self):
@@ -38,11 +39,11 @@ class PredicateTests(unittest.TestCase):
 
     def test_level(self):
         pred = Predicate(root="testroot")
-        self.assertEqual(pred.level, pred.ROOT)
+        self.assertEqual(pred.level, levels.ROOT)
         pred = pred.with_values(subject="testsub")
-        self.assertEqual(pred.level, pred.SUBJECT)
+        self.assertEqual(pred.level, levels.SUBJECT)
         pred = pred.with_values(session="session2019-03-11-001")
-        self.assertEqual(pred.level, pred.SESSION)
+        self.assertEqual(pred.level, levels.SESSION)
 
     def test_status(self):
         pass #TODO

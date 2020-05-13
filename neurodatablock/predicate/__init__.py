@@ -66,11 +66,11 @@ class Predicate(_collections.namedtuple("_Predicate",
     @property
     def level(self):
         """returns a string representation for the 'level' of specification."""
-        if self.file.status != _status.UNSPECIFIED:
+        if self.file.compute_write_status() != _status.UNSPECIFIED:
             return _levels.FILE
         elif self.domain is not None:
             return _levels.DOMAIN
-        elif self.session.status != _status.UNSPECIFIED:
+        elif self.session.compute_write_status() != _status.UNSPECIFIED:
             return _levels.SESSION
         elif self.subject is not None:
             return _levels.SUBJECT
