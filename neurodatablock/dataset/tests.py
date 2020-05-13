@@ -26,6 +26,7 @@ import unittest
 from . import *
 from .. import modes, testing
 from ..core import Selector
+from ..subject import Subject
 from ..predicate import PredicateError
 
 class DatasetTests(unittest.TestCase):
@@ -59,8 +60,8 @@ class DatasetTests(unittest.TestCase):
             path.mkdir()
         subs = data.subjects
         self.assertEqual(len(subs), 2)
-        subs["A1"]
-        subs["A2"]
+        assert isinstance(subs["A1"], Subject)
+        assert isinstance(subs["A2"], Subject)
         with self.assertRaises(PredicateError):
             subs["A3"]
         data = data.with_mode(modes.WRITE)
