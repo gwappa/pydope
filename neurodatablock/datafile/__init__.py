@@ -58,8 +58,10 @@ class Datafile(_Container):
     """a container class representing a data file."""
 
     def __init__(self, spec, mode=None):
-        """`spec` may be a path-like object or a Predicate.
+        """`spec` may be a Datafile, a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
+        if isinstance(spec, Datafile):
+            spec = spec._spec
         spec  = validate(spec, mode=mode)
         level = spec.level
         if level != _levels.FILE:
@@ -69,6 +71,10 @@ class Datafile(_Container):
         self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"data file does not exist: {self._path}")
+
+    @property
+    def level(self):
+        return _levels.FILE
 
     @property
     def name(self):

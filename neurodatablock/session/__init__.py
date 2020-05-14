@@ -26,11 +26,10 @@ import pathlib as _pathlib
 
 from .. import modes as _modes
 from .. import levels as _levels
-from ..predicate import Predicate as _Predicate
-from ..core import Container as _Container
-from ..core import Selector as _Selector
-from ..sessionspec import SessionSpec as _SessionSpec
+from .. import core as _core
 from .. import parsing as _parsing
+from ..predicate import Predicate as _Predicate
+from ..sessionspec import SessionSpec as _SessionSpec
 
 def validate(spec, mode=None):
     """`spec` may be a path-like object or a Predicate.
@@ -52,12 +51,14 @@ def validate(spec, mode=None):
         spec = spec.with_values(mode=_modes.validate(mode))
     return spec
 
-class Session(_Container):
+class Session(_core.Container):
     """a container class representing a session directory."""
 
     def __init__(self, spec, mode=None):
-        """`spec` may be a path-like object or a Predicate.
+        """`spec` may be a Session, path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
+        if isinstance(spec, Session):
+            spec = spec._spec
         spec  = validate(spec, mode=mode)
         level = spec.level
         if level in (_levels.ROOT, _levels.SUBJECT):
@@ -72,6 +73,10 @@ class Session(_Container):
         self._path = spec.compute_path()
         if (self._spec.mode == _modes.READ) and (not self._path.exists()):
             raise FileNotFoundError(f"session directory does not exist: {self._path}")
+
+    @property
+    def level(self):
+        return _levels.SESSION
 
     @property
     def name(self):
@@ -105,13 +110,11 @@ class Session(_Container):
 
     @property
     def domains(self):
-        from ..domain import Domain
-        return _Selector(self._spec, _levels.DOMAIN, container=Domain)
+        return _core.Selector(self._spec, _levels.DOMAIN)
 
     @property
     def files(self):
-        from ..datafile import Datafile
-        return self.in_tuple(Datafile(spec) for spec in self._spec.files)
+        return _core.Context(self._spec.files)
 
     def __getitem__(self, key):
         """`key` must be  a string."""

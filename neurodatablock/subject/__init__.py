@@ -26,9 +26,8 @@ import pathlib as _pathlib
 
 from .. import modes as _modes
 from .. import levels as _levels
+from .. import core as _core
 from ..predicate import Predicate as _Predicate
-from ..core import Container as _Container
-from ..core import Selector as _Selector
 
 def validate(spec, mode=None):
     """`spec` may be a path-like object or a Predicate.
@@ -46,12 +45,14 @@ def validate(spec, mode=None):
       spec = spec.with_values(mode=_modes.validate(mode))
     return spec
 
-class Subject(_Container):
+class Subject(_core.Container):
     """a container class representing a subject directory."""
 
     def __init__(self, spec, mode=None):
-        """`spec` may be a path-like object or a Predicate.
+        """`spec` may be a Subject, a path-like object or a Predicate.
         by default, dope.modes.READ is selected for `mode`."""
+        if isinstance(spec, Subject):
+            spec = spec._spec
         spec = validate(spec, mode=mode)
         level = spec.level
         if level in (_levels.ROOT,):
@@ -68,6 +69,10 @@ class Subject(_Container):
             raise FileNotFoundError(f"subject directory does not exist: {self._path}")
 
     @property
+    def level(self):
+        return _levels.SUBJECT
+
+    @property
     def name(self):
         return self._spec.subject
 
@@ -78,18 +83,15 @@ class Subject(_Container):
 
     @property
     def sessions(self):
-        from ..session import Session
-        return _Selector(self._spec, _levels.SESSION, container=Session)
+        return _core.Selector(self._spec, _levels.SESSION)
 
     @property
     def domains(self):
-        from ..domain import Domain
-        return self.in_tuple(Domain(spec) for spec in self._spec.domains)
+        return _core.Context(self._spec.domains)
 
     @property
     def files(self):
-        from ..datafile import Datafile
-        return self.in_tuple(Datafile(spec) for spec in self._spec.files)
+        return _core.Context(self._spec.files)
 
     def __getitem__(self, key):
         return self.sessions[key]

@@ -26,9 +26,8 @@ import pathlib as _pathlib
 
 from .. import modes as _modes
 from .. import levels as _levels
+from .. import core as _core
 from ..predicate import Predicate as _Predicate
-from ..core import Container as _Container
-from ..core import Selector as _Selector
 
 def validate(spec, mode=None):
     """spec: pathlike or Predicate"""
@@ -45,11 +44,13 @@ def validate(spec, mode=None):
         spec = spec.with_values(mode=_modes.validate(mode))
     return spec
 
-class Dataset(_Container):
+class Dataset(_core.Container):
     """a container class representing the dataset root directory."""
 
     def __init__(self, spec, mode=None):
-        """spec: pathlike or Predicate"""
+        """spec: Dataset, pathlike or Predicate"""
+        if isinstance(spec, Dataset):
+            spec = spec._spec
         self._spec = validate(spec, mode=mode)
         if (self._spec.mode == _modes.READ) and (not self._spec.root.exists()):
             raise FileNotFoundError(f"dataset directory does not exist: {self._spec.root}")
@@ -59,24 +60,24 @@ class Dataset(_Container):
             return self._spec.root
 
     @property
+    def level(self):
+        return _levels.ROOT
+
+    @property
     def subjects(self):
-        from ..subject import Subject
-        return _Selector(self._spec, _levels.SUBJECT, container=Subject)
+        return _core.Selector(self._spec, _levels.SUBJECT)
 
     @property
     def sessions(self):
-        from ..session import Session
-        return self.in_tuple(Session(spec) for spec in self._spec.sessions)
+        return _core.Context(self._spec.sessions)
 
     @property
     def domains(self):
-        from ..domain import Domain
-        return self.in_tuple(Domain(spec) for spec in self._spec.domains)
+        return _core.Context(self._spec.domains)
 
     @property
     def files(self):
-        from ..datafile import Datafile
-        return self.in_tuple(Datafile(spec) for spec in self._spec.files)
+        return _core.Context(self._spec.files)
 
     def __getitem__(self, key):
         return self.subjects[key]
