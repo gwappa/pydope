@@ -22,6 +22,9 @@
 # SOFTWARE.
 #
 
+import warnings as _warnings
+import collections as _collections
+
 from .. import modes as _modes
 from .. import levels as _levels
 
@@ -124,5 +127,26 @@ class Context(tuple):
     def __repr__(self):
         return f"Context{super().__repr__()}"
 
-    def load(self, **kwargs):
-        raise NotImplementedError(f"Context.load(**{kwargs})")
+    def load(self, throw=False, **kwargs):
+        from ..dataio import DataIOError, DataIOWarning
+
+        if len(self) == 0:
+            raise DataIOError("nothing to load")
+        level = self[0].level
+        if level != _levels.FILE:
+            raise DataIOError(f"cannot load from the level: '{level}'")
+
+        out = []
+        for container in self:
+            try:
+                out.append(container.load(**kwargs))
+            except DataIOError as e:
+                if throw == True:
+                    raise
+                else:
+                    _warnings.warn(f"{e}: {container.name}", DataIOWarning)
+        return tuple(out)
+
+class Entry(_collections.namedtuple("_Entry",
+                    ("source", "data"))):
+    pass

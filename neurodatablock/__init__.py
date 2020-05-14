@@ -37,6 +37,7 @@ from . import status
 from . import levels
 
 from .core import Context
+from .dataio import DataIOError, DataIOWarning
 from .sessionspec import SessionSpec
 from .predicate import Predicate
 from .dataset import Dataset

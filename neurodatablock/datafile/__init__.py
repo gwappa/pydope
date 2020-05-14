@@ -26,10 +26,10 @@ import pathlib as _pathlib
 
 from .. import modes as _modes
 from .. import levels as _levels
+from .. import core as _core
+from .. import dataio as _dataio
 
 from ..predicate import Predicate as _Predicate
-from ..core import Container as _Container
-from ..core import Selector as _Selector
 from ..sessionspec import SessionSpec as _SessionSpec
 from ..filespec import FileSpec as _FileSpec
 
@@ -54,7 +54,7 @@ def validate(spec, mode=None):
         spec = spec.with_values(mode=_mode.validate(mode))
     return spec
 
-class Datafile(_Container):
+class Datafile(_core.Container):
     """a container class representing a data file."""
 
     def __init__(self, spec, mode=None):
@@ -131,3 +131,9 @@ class Datafile(_Container):
     def domain(path):
         from ..domain import Domain
         return Domain(self._spec.as_domain())
+
+    def load(self, loader=None, **kwargs):
+        return _dataio.load(self._spec, loader=loader, **kwargs)
+
+    def save(self, data, loader=None, **kwargs):
+        return _dataio.save(self._spec, data, loader=loader, **kwargs)
