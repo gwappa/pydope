@@ -88,8 +88,8 @@ class Subject(_Container):
 
     @property
     def files(self):
-        from ..datafile import DataFile
-        return self.in_tuple(DataFile(spec) for spec in self._spec.files)
+        from ..datafile import Datafile
+        return self.in_tuple(Datafile(spec) for spec in self._spec.files)
 
     def __getitem__(self, key):
         return self.sessions[key]

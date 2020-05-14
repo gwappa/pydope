@@ -96,8 +96,8 @@ class Domain(_Container):
 
     @property
     def files(self):
-        from ..datafile import DataFile
-        return _Selector(self._spec, _levels.FILE, DataFile)
+        from ..datafile import Datafile
+        return _Selector(self._spec, _levels.FILE, Datafile)
 
     def __getitem__(self, key):
         return self.files[key]

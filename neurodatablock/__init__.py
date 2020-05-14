@@ -42,8 +42,8 @@ from .dataset import Dataset
 from .subject import Subject
 from .session import Session
 from .domain import Domain
-from .datafile import DataFile
+from .datafile import Datafile
 
 # aliases
-File     = DataFile
-Datafile = DataFile
+File     = Datafile
+DataFile = Datafile

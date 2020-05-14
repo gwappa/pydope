@@ -40,7 +40,7 @@ def validate(spec, mode=None):
         try:
             path = _pathlib.Path(spec).resolve()
         except TypeError:
-            raise ValueError(f"DataFile can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
+            raise ValueError(f"Datafile can only be initialized by a path-like object or a Predicate, not {spec.__class__}")
         domdir  = path.parent
         sessdir = domdir.parent
         subdir  = sessdir.parent
@@ -54,7 +54,7 @@ def validate(spec, mode=None):
         spec = spec.with_values(mode=_mode.validate(mode))
     return spec
 
-class DataFile(_Container):
+class Datafile(_Container):
     """a container class representing a data file."""
 
     def __init__(self, spec, mode=None):
