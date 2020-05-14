@@ -198,7 +198,7 @@ class FileSpec(_collections.namedtuple("_FileSpec",
             return ""
         elif isinstance(self.channel, str):
             return f"_{self.channel}"
-        elif iterable(self.channel):
+        elif hasattr(self.channel, "__iter__"):
             return "_" + "-".join(self.channel)
         else:
             raise ValueError(f"cannot compute channel representation from: {self.channel}")

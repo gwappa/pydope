@@ -72,7 +72,7 @@ class Datafile(_Container):
 
     @property
     def name(self):
-        return self._spec.file.format_name()
+        return self._spec.file.format_name(self._spec)
 
     @property
     def trial(self):

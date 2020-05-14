@@ -87,6 +87,14 @@ def combine(*stats):
             raise ValueError(f"unexpected status string(s): {invalid}")
         return SINGLE
 
+def _test_contains_ref(ref, tested):
+    if isinstance(tested, (str, int, bytes, _pathlib.Path)):
+        return (ref == tested)
+    elif hasattr(tested, "__iter__"):
+        return any(ref == elem for elem in tested)
+    else:
+        return False
+
 def test(ref, tested):
     """ref: reference specs, tested: a specific SINGLE-spec"""
     status = compute_write_status(ref)
@@ -96,8 +104,12 @@ def test(ref, tested):
         return True
     elif status == SINGLE:
         if isinstance(ref, (str, int, bytes, _pathlib.Path)):
-            return (ref == tested)
+            return _test_contains_ref(ref, tested)
+        elif hasattr(ref, "__iter__"):
+            # tuple with size 1
+            return _test_contains_ref(ref[0], tested)
         else:
+            # datetime
             return all(test(getattr(ref, attr), getattr(tested, attr)) \
                        for attr in ("year", "month", "day"))
     elif status == MULTIPLE:

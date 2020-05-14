@@ -23,11 +23,19 @@
 #
 
 import unittest
-from . import modes, testing
+from . import modes, testing, status
 from .core import Selector
 from .dataset import Dataset
 from .subject import Subject
 from .predicate import PredicateError
+
+class StatusTests(unittest.TestCase):
+    """testing of the 'status' submodule"""
+    def test_testfunction(self):
+        self.assertEqual(status.test(None, 'something'), True)
+        self.assertEqual(status.test('something', 'something'), True)
+        self.assertEqual(status.test('nothing', 'something'), False)
+        self.assertEqual(status.test(["some", "another"], ["some", "yet another"]), True)
 
 class BrowsingTests(unittest.TestCase):
     def setUp(self):
@@ -111,6 +119,7 @@ class BrowsingTests(unittest.TestCase):
         self.assertEqual(len(files), len(self._runs))
         self.assertEqual(tuple(sorted(set(r.index for r in files))),
                          tuple(sorted(self._runs)))
+        [file.name for file in domain.files]
 
     def tearDown(self):
         if self._root.exists():
