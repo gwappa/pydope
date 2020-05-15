@@ -1,0 +1,166 @@
+{
+    "dataset": {
+        "name": "Dominiak-2019-AirtrackBehavior-WhiskerMotion",
+        "description": "The head-fixed behavior of the mouse inside an X-maze on the floating Air-track platform. High-speed video tracking of the facial behavior and manual behavioral annotations are provided.",
+        "keywords": [ "Neuroscience", "Behavior", "Mouse", "Whiskers", "Maze" ],
+        "license": {
+            "name": "CC0",
+            "uri": "http://creativecommons.org/publicdomain/zero/1.0"
+        },
+        "references": [
+            {
+                "role": "is-supplement-to",
+                "name": "Dominiak SE, Nashaat MA, Sehara K, Oraby H, Larkum ME, Sachdev RNS (2019) Whisking asymmetry signals motor preparation and the behavioral state of mice.",
+                "uri": "https://doi.org/10.1101/568030"
+            }
+        ]
+    },
+
+    "people": {
+        "Sina": {
+            "name": "Sina E. Dominiak",
+            "lastname": "Dominiak",
+            "firstnames": "Sina E.",
+            "id": null,
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "sina.dominiak@gmail.com",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Conceptualization",
+                "https://dictionary.casrai.org/Contributor_Roles/Investigation",
+                "https://dictionary.casrai.org/Contributor_Roles/Methodology",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_original_draft"
+            ]
+        },
+        "Mostafa": {
+            "name": "Mostafa Nashaat A.",
+            "lastname": "Nashaat",
+            "firstnames": "Mostafa A.",
+            "id": "ORCID:0000-0002-4189-5977",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "mnashaat@aucegypt.edu",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Conceptualization",
+                "https://dictionary.casrai.org/Contributor_Roles/Funding_acquisition",
+                "https://dictionary.casrai.org/Contributor_Roles/Investigation",
+                "https://dictionary.casrai.org/Contributor_Roles/Methodology",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_original_draft"
+            ]
+        },
+        "Keisuke": {
+            "name": "Keisuke Sehara",
+            "lastname": "Sehara",
+            "firstnames": "Keisuke",
+            "id": "ORCID:0000-0003-4368-8143",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "keisuke.sehara@gmail.com",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Data_curation",
+                "https://dictionary.casrai.org/Contributor_Roles/Formal_analysis",
+                "https://dictionary.casrai.org/Contributor_Roles/Methodology",
+                "https://dictionary.casrai.org/Contributor_Roles/Software",
+                "https://dictionary.casrai.org/Contributor_Roles/Visualization",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_review_editing"
+            ]
+        },
+        "Hatem": {
+            "name": "Hatem Oraby",
+            "lastname": "Oraby",
+            "firstnames": "Hatem",
+            "id": "<TBD>",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "hatem.oraby@gmail.com",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Methodology",
+                "https://dictionary.casrai.org/Contributor_Roles/Software",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_review_editing"
+            ]
+        },
+        "Julien":  {
+            "name": "Julien Colomb",
+            "lastname": "Colomb",
+            "firstnames": "Julien",
+            "id": "ORCID:0000-0002-3127-5520",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "julien.colomb@fu-berlin.de",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Data_curation"
+            ]
+        },
+        "Matthew": {
+            "name": "Matthew E. Larkum",
+            "lastname": "Larkum",
+            "firstnames": "Matthew E.",
+            "id": "ORCID:0000-0001-9799-2656",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "matthew.larkum@gmail.com",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Conceptualization",
+                "https://dictionary.casrai.org/Contributor_Roles/Funding_acquisition",
+                "https://dictionary.casrai.org/Contributor_Roles/Project_administration",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_review_editing"
+            ]
+        },
+        "Robert": {
+            "name": "Robert N. S. Sachdev",
+            "lastname": "Sachdev",
+            "firstnames": "Robert N. S.",
+            "orcid": "ORCID:0000-0002-6627-0199",
+            "affiliation": { "$ref": "institutions/HU" },
+            "contact": "robert.sachdev@charite.de",
+            "roles": [
+                "https://dictionary.casrai.org/Contributor_Roles/Conceptualization",
+                "https://dictionary.casrai.org/Contributor_Roles/Funding_acquisition",
+                "https://dictionary.casrai.org/Contributor_Roles/Project_administration",
+                "https://dictionary.casrai.org/Contributor_Roles/Supervision",
+                "https://dictionary.casrai.org/Contributor_Roles/Writing_original_draft"
+            ]
+        }
+    },
+
+    "institutions": {
+        "HU": "Humboldt University of Berlin, Germany"
+    },
+
+    "funded-by": {
+        "DFG1": {
+            "from": "DFG",
+            "to": { "$ref": "people/Matthew" },
+            "id": "2112280105"
+        },
+        "DFG2": {
+            "from": "DFG",
+            "to": { "$ref": "people/Matthew" },
+            "id": "LA 3442/3-1"
+        },
+        "DFG3": {
+            "from": "DFG",
+            "to": { "$ref": "people/Matthew" },
+            "id": "LA 3442/5-1"
+        },
+        "SFB": {
+            "from": "DFG",
+            "to": { "$ref": "people/Matthew" },
+            "id": "327654276"
+        },
+        "Horizon2020": {
+            "from": "EU",
+            "to": { "$ref": "people/Matthew" },
+            "id": "670118"
+        },
+        "HBP-SGA1/SGA2": {
+            "from": "EU",
+            "to": { "$ref": "people/Matthew" },
+            "id": "720270"
+        },
+        "Einstein Stiftung": {
+            "from": "Einstein Stiftung",
+            "to": [{ "$ref": "people/Matthew" }, { "$ref": "people/Mostafa" }],
+            "id": null
+        }
+    },
+
+    "data-published-by": [
+        { "$ref": "people/Keisuke" },
+        { "$ref": "people/Julien" }
+    ]
+}

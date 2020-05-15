@@ -1,0 +1,32 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a subclass of individual being used to refer to a person.",
+
+    "allOf": [
+        { "$ref": "referrable.json" },
+        {
+            "properties": {
+                "lastname": {
+                    "$comment": "a string representing the last name of this person. This is used to identify the person across the database, especially when the \"uri\" property is set to null.",
+
+                    "type": "string"
+                },
+                "firstnames": {
+                    "$comment": "a string representing the first names (i.e. other than the last name) of this person. This is used to identify the person across the database, especially if the \"uri\" property is set to null.",
+
+                    "type": "string"
+                },
+                "contact": {
+                    "$comment": "a string representing the contact information of this person. It is recommended to contain the e-mail address of the person here, but it can be the mailing address, too. This field can well be null if this person does not have, or is not willing to share, a contact.",
+
+                    "type": "string"
+                },
+                "uri": {
+                    "$ref": "uri.json#definitions/orcid"
+                }
+            },
+
+            "required": ["firstnames", "lastname", "contact"]
+        }
+    ]
+}

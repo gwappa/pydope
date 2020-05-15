@@ -1,0 +1,19 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "definition of a metadata entry",
+
+    "type":     "object",
+    "properties": {
+        "description": {
+            "type":     "string",
+            "$comment": "a string describing what this metadata means."
+        },
+        "unit": {
+            "oneOf":  [
+                { "type": "string" },
+                { "type": "null" }
+            ],
+            "$comment": "optional unit description."
+        }
+    }
+}

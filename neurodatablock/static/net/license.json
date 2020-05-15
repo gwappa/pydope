@@ -1,0 +1,33 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a class being used to represent a license type of the subject being described.",
+
+    "allOf": [
+        { "$ref": "referrable.json" },
+        {
+            "$comment": "the \"name\" property represents the shorthand of the license e.g. \"CC0\", \"MIT\", \"GPL2\", whereas the \"uri\" property refers to the address where the actual license terms are located.",
+
+            "properties": {
+                "authors": {
+                    "$comment": "an array of \"individual\" instances, or a reference to it, representing the holder(s) of this license.",
+
+                    "type":  "array",
+                    "items": { "$ref": "individual.json" }
+                },
+
+                "year": {
+                    "$comment": "a string representing the four-digit year (or a range of four-digit years) when this license is valid (from).",
+
+                    "type":    "string",
+                    "pattern": "[0-9]{4}-?([0-9]{4})?"
+                },
+
+                "uri": {
+                    "$ref": "uri.json#definitions/default"
+                }
+            },
+
+            "required": [ "authors", "year" ]
+        }
+    ]
+}

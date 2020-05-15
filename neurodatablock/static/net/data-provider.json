@@ -1,0 +1,28 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a class being used to represent the generator of the data.",
+
+    "oneOf": [
+        {
+            "type": "object",
+            "$comment": "to represent who ran a job (e.g. experiments) to generate the data."
+            "properties": {
+                "is-performed-by": { "$ref": "contributor.json" }
+            }
+        },
+        {
+            "type": "object",
+            "$comment": "to represent what program (may be a person) generated the data.",
+            "properties": {
+                "is-generated-by": { "$ref": "referrable.json" }
+            }
+        },
+        {
+            "type": "object",
+            "$comment": "to represent who (or what program) processed (mediated, or validated) the data before being finalized as it is in the current format.",
+            "properties": {
+                "is-processed-by": { "$ref": "referrable.json" }
+            }
+        }
+    ]
+}

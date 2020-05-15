@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "$comment": "the base class being used to refer to anything \"referrable\" on the web.",
+
+    "type": "object",
+    "properties": {
+        "name": {
+            "$comment": "a human-friendly name of this object.",
+            "type": "string"
+        },
+        "uri": {
+            "$comment": "a string representing the URI-based ID of this object. Can be null (but not recommended), if this \"referrable\" does not have any ID (although it may sound paradoxical).",
+            "$ref": "uri.json"
+        }
+    },
+    "required": [ "name", "uri" ]
+}

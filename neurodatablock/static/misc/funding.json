@@ -1,0 +1,28 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a class representing a funding source from an \"individual\" (institution, company).",
+
+    "type": "object",
+
+    "properties": {
+
+        "source": {
+            "$comment": "a required property referencing an \"individual\", indicating the funding body.",
+            "$ref": "../net/individual.json"
+        },
+
+        "provided_to": {
+            "$comment": "a required array of \"person\" instances indicating the people that the funding is supposed to be given to.",
+            "type": "array",
+            "items": { "$ref": "../net/person.json" },
+            "minItems": 1
+        },
+
+        "id": {
+            "$comment": "the identification number of the funding from the \"source\".",
+            "type": "string"
+        }
+    },
+    
+    "required": [ "source", "provided_to", "id" ]
+}

@@ -1,0 +1,31 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a subclass of \"referrable\" being used to refer to a unique article on the web.",
+
+    "allOf": [
+        { "$ref": "referrable.json" },
+        {
+            "$comment": "the \"name\" property is used to represent the human-readable \"full\" citation, whereas the \"uri\" property represents the URI of the article, and may start either with \"https://\" or with \"doi:\", depending on the type of the article.",
+
+            "properties": {
+                "reference_type": {
+                    "$comment": "a string representing how this citation works in the context.",
+                    "type":     "string",
+                    "enum": [
+                        "is-supplement-to",
+                        "is-described-by",
+                        "is-referenced-by"
+                    ]
+                },
+
+                "uri": {
+                    "$comment": "for a citation, the URI must start either from \"https://\" or \"doi:\"",
+                    "oneOf": [
+                        { "$ref": "uri.json#definitions/default" },
+                        { "$ref": "uri.json#definitions/doi" }
+                    ]
+                }
+            }
+        }
+    ]
+}

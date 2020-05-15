@@ -1,0 +1,28 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a subclass of person being used to refer to a contributor to a project.",
+
+    "allOf": [
+        { "$ref": "person.json" },
+        {
+            "properties": {
+                "affiliation": {
+                    "$comment": "a list of institutions that the contributor is affiliated to.",
+
+                    "type": "array",
+                    "items": { "$ref": "institution.json" },
+                    "minItems": 1
+                },
+                "roles": {
+                    "$comment": "an array of roles, specified in terms of the contributor roles (as it is defined in the CRediT taxonomy, https://www.casrai.org/credit.html",
+
+                    "type":  "array",
+                    "items": { "$ref": "../misc/credit.json" },
+                    "minItems": 1
+                }
+            },
+
+            "required": ["affiliation", "roles"]
+        }
+    ]
+}

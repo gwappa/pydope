@@ -1,0 +1,23 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a class for describing formal aspects of a publication.",
+
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "keywords": {
+            "type":  "array",
+            "items": { "type": "string" }
+        },
+        "license": { "$ref": "../net/license.json" },
+        "references": {
+            "type":  "array",
+            "items": { "$ref": "../net/citation.json" }
+        }
+    },
+    "required": [ "name", "description", "license", "references" ]
+}

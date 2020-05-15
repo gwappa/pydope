@@ -1,0 +1,15 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "a subclass of \"individual\" that is used to represent the affiliated institution(s).",
+
+    "allOf": [
+        { "$ref": "individual.json" },
+        {
+            "properties": {
+                "uri": {
+                    "$ref": "uri.json#definitions/default"
+                }
+            }
+        }
+    ]
+}

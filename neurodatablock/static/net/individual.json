@@ -1,0 +1,8 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "any individual (people, institutions, companies etc.) being referred to through the URI.",
+
+    "allOf": [
+        { "$ref": "referrable.json" }
+    ]
+}

@@ -1,0 +1,37 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "description of a type of files inside a domain.",
+    "type":     "object",
+
+    "properties": {
+
+        "description": {
+            "type":     "string",
+            "$comment": "a string describing what this file type stands for."
+        },
+
+        "suffix": {
+            "type":     "string",
+            "pattern":  "(^\.)|(^$)",
+            "$comment": "the dot-starting suffix of this type of files, or an empty string, if they do not have any."
+        },
+
+        "mimetype": {
+            "type":     "string",
+            "$comment": "a string representing the MIME type of the content. In probable cases where no valid MIME type exists, you can 'define' a human-readable type, e.g. binary/matlab, or binary/igor."
+        },
+
+        "channels": {
+            "type":     "object",
+            "$comment": "a section describing what channels of signals are recorded in this domain.",
+
+            "patternProperties": {
+                "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$": {
+                    "$ref": "channel.json"
+                }
+            }
+        }
+    },
+
+    "additionalProperties": false
+}

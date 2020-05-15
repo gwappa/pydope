@@ -1,0 +1,64 @@
+{
+    "raw": {
+        "description": "the raw video and behavioral annotation.",
+        "reference": [
+            {
+                "role": "is-performed-by",
+                "name": "Sina E. Dominiak",
+                "uri":  null
+            }
+        ],
+        "domains": {
+            "videos": {
+                "description": "the video files taken at 200 Hz using a high-speed camera located above the head-fixed animal.",
+                "mimetype": "video/mp4",
+                "suffix":   ".mp4",
+                "properties": {
+                    "rate": {
+                        "type":  "number",
+                        "value": "200",
+                        "precision": 2,
+                        "unit": "Hz"
+                    }
+                }
+            },
+            "states": {
+                "description": "the CSV files containing information about correspondence between trial numbers, video frames (ONE-STARTING) and behavioral states.",
+                "mimetype":    "text/csv",
+                "suffix":      ".csv"
+            }
+        }
+    },
+    "tracking": {
+        "description": "whisker and nose tracking, based on high-speed videos taken at 200 Hz, and analyzed using the python 'videobatch' program.",
+        "reference": [
+            {
+                "role": "is-analyzed-using",
+                "name": "videobatch",
+                "uri":  "https://github.com/gwappa/python-videobatch"
+            },
+            {
+                "role": "is-performed-by",
+                "name": "Keisuke Sehara",
+                "uri":  "https://orcid.org/0000-0003-4368-8143"
+            }
+        ],
+        "domains": {
+            "projection": {
+                "description": "per-trial or per-session maximal projection images.",
+                "mimetype":    "image/png",
+                "suffix":      ".png"
+            },
+            "ROI": {
+                "description": "B/W masks for ROIs to track colors from.",
+                "mimetype":    "image/png",
+                "suffix":      ".png"
+            },
+            "tracked": {
+                "description": "the CSV files containing tracked object positions in pixels. 'Slice' represents the ZERO-STARTING frame index in the video of origin.",
+                "mimetype":    "text/csv",
+                "suffix":      ".csv"
+            }
+        }
+    }
+}

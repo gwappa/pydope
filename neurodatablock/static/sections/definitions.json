@@ -1,0 +1,49 @@
+{
+    "$schema":  "http://json-schema.org/draft-07/schema#",
+    "$comment": "a schema describing the metadata-definitions section for neurodatablock format.",
+
+    "type": "object",
+
+    "properties": {
+        "description": {
+            "type":     "string",
+            "$comment": "a string describing what this dataset is."
+        },
+
+        "subjects_metadata": {
+            "type":     "object",
+            "$comment": "definitions on subject-specific metadata entries.",
+            "patternProperties": {
+                "^[a-zA-Z0-9][a-zA-Z0-9-_]*$": {
+                    "$ref": "../struct/metadata.json"
+                }
+            },
+            "additionalProperties": false
+        },
+
+        "domains": {
+            "type":     "object",
+            "$comment": "description of domains.",
+            "patternProperties": {
+                "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$": {
+                    "$ref": "../struct/domain.json"
+                }
+            }
+        }
+    },
+
+    "patternProperties": {
+        "^[a-zA-Z0-9][a-zA-Z0-9-]*s_metadata$": {
+            "type":     "object",
+            "$comment": "definitions of session type-specific metadata entries.",
+            "patternProperties": {
+                "^[a-zA-Z0-9][a-zA-Z0-9-_]*$": {
+                    "$ref": "../struct/metadata.json"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+
+    "additionalProperties": false
+}

@@ -1,0 +1,17 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "description of a channel of signals recorded in a file.",
+    "type":     "object",
+
+    "properties": {
+        "description": {
+            "type":     "string",
+            "$comment": "a string describing what this channel represents."
+        },
+
+        "signal_type": {
+            "type":     "string",
+            "$comment": "a human-readable notation of what type of signal this channel conveys."
+        }
+    }
+}

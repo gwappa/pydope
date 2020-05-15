@@ -22,6 +22,10 @@ setuptools.setup(
         'Programming Language :: Python :: 3',
         ],
     packages=setuptools.find_packages(),
+    package_data={
+        "neurodatablock": [ "static/*.json",
+                            "static/*/*.json" ]
+    },
     entry_points={
         'console_scripts': [
             # '%module% =%module%.__main__:run'

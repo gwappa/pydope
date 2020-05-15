@@ -1,0 +1,31 @@
+{
+    "$schema":  "http://json-schema.org/schema#",
+    "$comment": "description of a domain.",
+    "type":     "object",
+
+    "properties": {
+        "description": {
+            "type":     "string",
+            "$comment": "a string describing what this domain represents (e.g. a program, a manual job)."
+        },
+
+        "reference": {
+            "type":     "array",
+            "item":     { "$ref": "../net/data-provider.json" },
+            "$comment": "a list of who (or what program) is involved during generation of files in this domain."
+        }
+
+        "files": {
+            "$comment": "a section describing what types of files are there in this domain.",
+            "type":     "object",
+
+            "patternProperties": {
+                "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$": { "$ref": "file.json" }
+            },
+
+            "additionalProperties": false
+        }
+    },
+
+    "additionalProperties": false
+}
