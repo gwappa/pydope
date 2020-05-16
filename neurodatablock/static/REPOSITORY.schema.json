@@ -6,29 +6,31 @@
         "data_publication": { "$ref": "../net/publication.json" },
         "people":  {
             "type": "object",
-            "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/contributor.json" }
+            "patternProperties": {
+                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/contributor.json" }
+            }
         },
         "affiliations": {
             "type": "object",
-            "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/institution.json" }
+            "patternProperties": {
+                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/institution.json" }
+            }
         },
         "fundings": {
             "type": "object",
-            "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../misc/funding.json" }
+            "patternProperties": {
+                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../misc/funding.json" }
+            }
         },
         "data_published_by": {
             "type": "array",
             "items": { "$ref": "../net/contributor.json" },
             "minItems": 1
-        },
-        "description": {
-            "$comment": "the description of this section.",
-            "type": "string"
         }
     },
 
     "required": [
-        "dataset",
+        "data_publication",
         "people",
         "affiliations",
         "fundings",

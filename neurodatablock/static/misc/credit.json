@@ -1,20 +1,22 @@
 {
     "$schema":  "http://json-schema.org/schema#",
-    "$comment": "role of a project contributor, specified in terms of the contributor roles (as it is defined in the CRediT taxonomy, https://www.casrai.org/credit.html",
+    "$comment": "role of a project contributor, specified in terms of the contributor roles (as it is defined in the CRediT taxonomy [https://www.casrai.org/credit.html]. also refer to [https://jats4r.org/credit-taxonomy]. Each role is defined e.g. [https://dictionary.casrai.org/Contributor_Roles/Conceptualization]",
 
     "type":     "string",
     "enum":     [
         "conceptualization",
-        "project-administration",
-        "supervision",
+        "data-curation",
+        "formal-analysis",
         "funding-acquisition",
         "investigation",
         "methodology",
+        "project-administration",
+        "resources",
         "software",
-        "formal-analysis",
+        "supervision",
+        "validation",
         "visualization",
         "writing-original-draft",
         "writing-review-editing",
-        "data-curation"
     ]
 }

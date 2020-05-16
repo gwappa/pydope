@@ -8,6 +8,10 @@
             "properties": {
                 "uri": {
                     "$ref": "uri.json#definitions/default"
+                },
+                "address": {
+                    "type": "string",
+                    "$comment": "an optional field for representing the address for the institution."
                 }
             }
         }
