@@ -90,12 +90,12 @@ class Domain(_core.Container):
         return Dataset(self._spec.as_dataset())
 
     @property
-    def subject(path):
+    def subject(self):
         from ..subject import Subject
         return Subject(self._spec.as_subject())
 
     @property
-    def session(path):
+    def session(self):
         from ..session import Session
         return Session(self._spec.as_session())
 

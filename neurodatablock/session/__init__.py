@@ -83,7 +83,7 @@ class Session(_core.Container):
         return self._spec.session.name
 
     @property
-    def session_type(self):
+    def type(self):
         return self._spec.session.type
 
     @property

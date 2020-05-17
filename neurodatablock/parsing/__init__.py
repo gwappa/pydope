@@ -71,7 +71,7 @@ class element:
     @classmethod
     def block_repository_related(cls, fmt):
         if isinstance(fmt, str):
-            for blocked in ("LICENSE", "README"):
+            for blocked in ("LICENSE", "README", "REPOSITORY"):
                 if fmt.lower().strip().startswith(blocked.lower()):
                     raise ParseError(f"subject name shall not start with '{blocked}'")
 
