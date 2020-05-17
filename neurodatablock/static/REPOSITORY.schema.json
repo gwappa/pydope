@@ -1,39 +1,16 @@
 {
     "$schema":  "http://json-schema.org/schema#",
-    "$comment": "a section that describes general project organization",
+    "$comment": "definitions related to the datset repository.",
+
+    "type": "object",
 
     "properties": {
-        "data_publication": { "$ref": "../net/publication.json" },
-        "people":  {
-            "type": "object",
-            "patternProperties": {
-                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/contributor.json" }
-            }
-        },
-        "affiliations": {
-            "type": "object",
-            "patternProperties": {
-                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../net/institution.json" }
-            }
-        },
-        "fundings": {
-            "type": "object",
-            "patternProperties": {
-                "^[A-Za-z_][A-Za-z0-9_]*$": { "$ref": "../misc/funding.json" }
-            }
-        },
-        "data_published_by": {
-            "type": "array",
-            "items": { "$ref": "../net/contributor.json" },
-            "minItems": 1
-        }
+        "project": { "$ref": "../sections/project.json" },
+        "definitions": { "$ref": "../sections/definitions.json" }
     },
 
     "required": [
-        "data_publication",
-        "people",
-        "affiliations",
-        "fundings",
-        "data_published_by"
+        "project",
+        "definitions"
     ]
 }

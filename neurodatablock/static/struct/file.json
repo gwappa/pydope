@@ -6,8 +6,8 @@
     "properties": {
 
         "description": {
-            "type":     "string",
-            "$comment": "a string describing what this file type stands for."
+            "name":     "string",
+            "$comment": "a short name describing what this file type stands for."
         },
 
         "suffix": {
@@ -18,7 +18,7 @@
 
         "mimetype": {
             "type":     "string",
-            "$comment": "a string representing the MIME type of the content. In probable cases where no valid MIME type exists, you can 'define' a human-readable type, e.g. binary/matlab, or binary/igor."
+            "$comment": "a string representing the MIME type of the content (see e.g.: [https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types]). In probable cases where no valid MIME type exists, you can 'define' a human-readable type, e.g. application/matlab, or application/igor, although it is not considered strictly as a MIME type."
         },
 
         "channels": {

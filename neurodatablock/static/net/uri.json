@@ -4,19 +4,23 @@
     "definitions": {
         "default": {
             "type": "string",
-            "pattern": "^https?://"
+            "pattern": "^https?://",
+            "resolver": ""
         },
         "doi": {
             "type": "string",
-            "pattern": "^[Dd][Oo][Ii]:"
+            "pattern": "^[Dd][Oo][Ii]:",
+            "resolver": "https://dx.doi.org/"
         },
         "rrid": {
             "type": "string",
-            "pattern": "^RRID:"
+            "pattern": "^RRID:",
+            "resolver": "https://scicrunch.org/resolver/"
         },
         "orcid": {
             "type": "string",
-            "pattern": "^ORCID:"
+            "pattern": "^ORCID:",
+            "resolver": "https://orcid.org/"
         }
     },
 

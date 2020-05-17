@@ -45,5 +45,16 @@
         }
     },
 
+    "programs": {
+        "$comment": "here is where to write info on programs (manual jobs or computer programs) to be referenced as 'data-provider's.",
+
+        "type": "object",
+        "patternProperties": {
+            "^[a-zA-Z0-9][a-zA-Z0-9-_]*$": {
+                "$ref": "../net/data-provider.json"
+            }
+        }
+    }
+
     "additionalProperties": false
 }
