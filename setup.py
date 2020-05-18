@@ -14,7 +14,7 @@ setuptools.setup(
     author='Keisuke Sehara',
     author_email='keisuke.sehara@gmail.com',
     license='MIT',
-    install_requires=[ "jsonref", "ruamel.yaml" ],
+    install_requires=[ "jsonref", "ruamel.yaml", "pystache" ],
     python_requires='>=3.4',
     classifiers=[
         'Development Status :: 3 - Alpha',
